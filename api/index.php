@@ -21,12 +21,10 @@ require 'Slim/Slim.php';
 $app = new \Slim\Slim();
 
 /**
- * Step 3: Define the Slim application routes
+ * PACKAGE ROUTES
  *
- * Here we define several Slim application routes that respond
- * to appropriate HTTP request methods. In this example, the second
- * argument for `Slim::get`, `Slim::post`, `Slim::put`, and `Slim::delete`
- * is an anonymous function.
+ * 1. /packages/:id
+ * 2. /packages/history/:id
  */
 
 // GET: /packages -> Get Packages for particular tenant
@@ -35,13 +33,21 @@ $app->get('/packages/:id', function ($id) {
 	try {
 		$db = getConnection();
 		$q = $db->query($sql);
-		while($row = $q->fetch_array(MYSQLI_ASSOC)) {
-			$rows[] = $row;
-		}
-                // Format Response
-                $data['status'] = 'success';
-                $data['pending_package_pickups'] = $q->num_rows;
-                $data['response'] = $rows;
+                if($q->num_rows > 0) {
+                    while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                        $rows[] = $row;
+                    }
+                    // Format Response
+                    $data['status'] = 'success';
+                    $data['pending_package_pickups'] = $q->num_rows;
+                    $data['data'] = $rows;
+
+                } else {
+                    // Format Response
+                    $data['status'] = 'success';
+                    $data['pending_package_pickups'] = $q->num_rows;
+                    $data['data'] = NULL;
+                }
                 // Free result and close connection
 		$q->free();
 		$db->close();
@@ -52,19 +58,25 @@ $app->get('/packages/:id', function ($id) {
 	}
 }); // ***END  GET: /packages/:id -> Get all pending packages for particular tenant
 
-// GET: /packages/history -> Get package pickup histor limit 5
+// GET: /packages/history -> Get package pickup history limit 5
 $app->get('/packages/history/:id', function ($id) {
 	$sql = "SELECT * FROM PackageDelivered WHERE pack_pickedup='yes' AND tnt_id=$id ORDER BY pack_date_pickedup LIMIT 5";
 	try {
 		$db = getConnection();
 		$q = $db->query($sql);
-		while($row = $q->fetch_array(MYSQLI_ASSOC)) {
-			$rows[] = $row;
-		}
-                // Format Response
-                $data['status'] = 'success';
-                $data['package_history'] = $q->num_rows;
-                $data['response'] = $rows;
+                if($q->num_rows > 0) {
+                    while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                            $rows[] = $row;
+                    }
+                    // Format Response
+                    $data['status'] = 'success';
+                    $data['package_history'] = $q->num_rows;
+                    $data['response'] = $rows;
+                } else {
+                    $data['status'] = 'success';
+                    $data['package_history'] = $q->num_rows;
+                    $data['response'] = NULL;
+                }
                 // Free result and close connection
 		$q->free();
 		$db->close();
@@ -73,7 +85,54 @@ $app->get('/packages/history/:id', function ($id) {
 	} catch (PDOException $e) {
 		echo '{"error"}' . $e->getMessage();
 	}
-}); // ***END  GET: /contacts -> Get all contacts
+}); // ***END  GET: /packages/history/:id -> Get package history limit 5
+
+/**
+ * Login ROUTES
+ *
+ * 1. POST -> /login
+ * 
+ */
+
+// POST: /login -> Login User
+$app->post('/login', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $login = json_decode($body);
+    
+    try {
+        $db = getConnection();
+        
+        $email = $db->real_escape_string($login->login_email);
+        $pass = $db->real_escape_string($login->login_password);
+        $pass = hash('sha256', $pass);
+        
+        $sql = "SELECT Tenant.tnt_id, Tenant.tmt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_email, Tenant.tnt_avatar, Tenant.tnt_profile_complete, Leasing.tun_id, Leasing.urm_id, TowerUnit.tun_opentok_session FROM Tenant LEFT JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id LEFT JOIN TowerUnit ON Leasing.tun_id = TowerUnit.tun_id WHERE Tenant.tnt_email='$email' AND Tenant.tnt_password='$pass'";
+        $q = $db->query($sql);
+        if($q->num_rows > 0) {
+            while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                    $rows[] = $row;
+            }
+            // Format Response
+            $data['status'] = 'success';
+            $data['login_match'] = $q->num_rows;
+            $data['data'] = $rows;
+        } else {
+            $data['status'] = 'success';
+            $data['login_match'] = $q->num_rows;
+            $data['data'] = NULL;
+        }
+        // Free result and close connection
+        $q->free();
+        $db->close();
+
+        echo json_encode($data);
+    } catch (PDOException $e) {
+        echo '{"error"}' . $e->getMessage();
+    }
+    
+}); // ***END POST: /login -> Login User
+
 
 // POST: /contacts -> Create new contact
 $app->post('/contacts', function() {
