@@ -102,6 +102,10 @@ $app->post('/maintenance', function() {
     
     $db = getConnection();
     $tnt_id = $db->real_escape_string($ticket->tnt_id);
+    $title = $db->real_escape_string($ticket->title);
+    $description = $db->real_escape_string($ticket->description);
+    $today = date("Y-m-d H:i:s");
+    $status = 'open';
     
     $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
     $q = $db->query($sql);
@@ -112,9 +116,8 @@ $app->post('/maintenance', function() {
         $sql = "INSERT INTO MaintenanceTicket (tnt_id, tun_id, mticket_status, mticket_title, mticket_description, mticket_open_date) VALUES (?, ?, ?, ?, ?, ?)";
         try {
             $stmt = $db->prepare($sql);
-            $stmt->bind_param('iissss', $tnt_id, $tun_id, 'open', $db->real_escape_string($ticket->title), $db->real_escape_string($ticket->description), date("Y-m-d H:i:s"));
+            $stmt->bind_param('iissss', $tnt_id, $tun_id, $status, $title, $description, $today);
             $stmt->execute();
-            $contact->id = $stmt->insert_id;
             $db->close();
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
