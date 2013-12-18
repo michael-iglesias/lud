@@ -134,7 +134,7 @@ $app->post('/maintenance', function() {
 
 // GET - /maintenance/:id
 $app->get('/maintenance/:id', function($id) {
-    $sql = "SELECT * FROM MaintenanceTicket WHERE mticket_status='open' AND tnt_id=$id";
+    $sql = "SELECT * FROM MaintenanceTicket WHERE (mticket_status='open' OR mticket_status='processing') AND tnt_id=$id";
     try {
         $db = getConnection();
         $q = $db->query($sql);
@@ -193,6 +193,97 @@ $app->get('/maintenance/history/:id', function($id) {
         echo '{"error"}' . $e->getMessage();
     }
 }); // ***END GET /maintenance/history/:id
+
+/**
+ * Neighbor Notifications ROUTES
+ * 1. POST -> /neighbor_notification
+ * 2. GET -> /neighbor_notification
+ */
+// POST: neighbor_notification - Create Neighbor Notification
+$app->post('neighbor_notification', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $notification = json_decode($body);
+    
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($notification->tnt_id);
+    $type = $db->real_escape_string($notification->type);
+    $details = $db->real_escape_string($notification->details);
+    $date = $notification->date;
+    
+    $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $tun_id = $row['tun_id'];
+        }
+        $sql = "INSERT INTO NeighborNotification (tnt_id, tun_id, nnot_type, nnot_details, nnot_date) VALUES (?, ?, ?, ?, ?)";
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->bind_param('iisss', $tnt_id, $tun_id, $type, $details, $date);
+            $stmt->execute();
+            $db->close();
+        } catch (Exception $e) {
+            echo 'Error: ' . $e->getMessage();
+        }
+        // Format Response
+        $data['status'] = 'success';
+    } else {
+        // Format Response
+        $data['status'] = 'failure';
+    }
+    
+    echo json_encode($data);
+}); // ***END POST - neighbor_notification
+
+// GET - neighbor_notification - Get Neigbor Notifications for tenants unit
+$app->get('/neighbor_notification/:id', function($id) {
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($notification->tnt_id);
+    
+    $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $tun_id = $row['tun_id'];
+        }
+    
+        $sql = "SELECT * FROM NeighborNotification WHERE tun_id=$tnt_id";
+        try {
+            $db = getConnection();
+            $q = $db->query($sql);
+            if($q->num_rows > 0) {
+                while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                    $current_date = date("m-d-Y");
+                    $date = strtotime($row['nnot_date']);
+                    if($current_date <= $date) {
+                        $rows[] = $row;
+                        $i += 1;
+                    }                    
+                }
+                // Format Response
+                $data['status'] = 'success';
+                $data['neighbor_notifications'] = $i;
+                $data['data'] = $rows;
+
+            } else {
+                // Format Response
+                $data['status'] = 'success';
+                $data['neighbor_notifications'] = $q->num_rows;
+                $data['data'] = NULL;
+            }
+            // Free result and close connection
+            $q->free();
+            $db->close();
+        } catch (PDOException $e) {
+            echo '{"error"}' . $e->getMessage();
+        }
+    } else {
+        // Format Response
+        $data['status'] = 'failure';
+    }
+    echo json_encode($data);
+});
 
 /**
  * Login ROUTES
