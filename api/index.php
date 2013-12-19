@@ -200,7 +200,7 @@ $app->get('/maintenance/history/:id', function($id) {
  * 2. GET -> /neighbor_notification
  */
 // POST: neighbor_notification - Create Neighbor Notification
-$app->post('neighbor_notification', function() {
+$app->post('/guest_passes', function() {
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
     $notification = json_decode($body);
@@ -208,8 +208,9 @@ $app->post('neighbor_notification', function() {
     $db = getConnection();
     $tnt_id = $db->real_escape_string($notification->tnt_id);
     $type = $db->real_escape_string($notification->type);
-    $details = $db->real_escape_string($notification->details);
-    $date = $notification->date;
+    $fname = $db->real_escape_string($notification->fname);
+    $lname = $db->real_escape_string($notification->lname);
+    $date = data("m-d-Y");
     
     $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
     $q = $db->query($sql);
@@ -217,10 +218,10 @@ $app->post('neighbor_notification', function() {
         while($row = $q->fetch_array(MYSQLI_ASSOC)) {
             $tun_id = $row['tun_id'];
         }
-        $sql = "INSERT INTO NeighborNotification (tnt_id, tun_id, nnot_type, nnot_details, nnot_date) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO NeighborNotification (tnt_id, tun_id, pass_type, pass_fname, pass_lname, pass_date) VALUES (?, ?, ?, ?, ?, ?)";
         try {
             $stmt = $db->prepare($sql);
-            $stmt->bind_param('iisss', $tnt_id, $tun_id, $type, $details, $date);
+            $stmt->bind_param('iisss', $tnt_id, $tun_id, $type, $fname, $lname, $date);
             $stmt->execute();
             $db->close();
         } catch (Exception $e) {
@@ -237,9 +238,9 @@ $app->post('neighbor_notification', function() {
 }); // ***END POST - neighbor_notification
 
 // GET - neighbor_notification - Get Neigbor Notifications for tenants unit
-$app->get('/neighbor_notification/:id', function($id) {
+$app->get('/guess_passes/:id', function($id) {
     $db = getConnection();
-    $tnt_id = $db->real_escape_string($notification->tnt_id);
+    $tnt_id = $db->real_escape_string($id);
     
     $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
     $q = $db->query($sql);
@@ -248,14 +249,15 @@ $app->get('/neighbor_notification/:id', function($id) {
             $tun_id = $row['tun_id'];
         }
     
-        $sql = "SELECT * FROM NeighborNotification WHERE tun_id=$tnt_id";
+        $sql = "SELECT * FROM GuestPass WHERE tun_id=$tun_id";
         try {
+            $i = 0; $rows = NULL;
             $db = getConnection();
             $q = $db->query($sql);
             if($q->num_rows > 0) {
                 while($row = $q->fetch_array(MYSQLI_ASSOC)) {
                     $current_date = date("m-d-Y");
-                    $date = strtotime($row['nnot_date']);
+                    $date = date( "m-d-Y", strtotime($row['pass_date']) );
                     if($current_date <= $date) {
                         $rows[] = $row;
                         $i += 1;
@@ -263,13 +265,13 @@ $app->get('/neighbor_notification/:id', function($id) {
                 }
                 // Format Response
                 $data['status'] = 'success';
-                $data['neighbor_notifications'] = $i;
+                $data['guest_passes'] = $i;
                 $data['data'] = $rows;
 
             } else {
                 // Format Response
                 $data['status'] = 'success';
-                $data['neighbor_notifications'] = $q->num_rows;
+                $data['guest_passes'] = $q->num_rows;
                 $data['data'] = NULL;
             }
             // Free result and close connection
