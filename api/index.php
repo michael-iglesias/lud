@@ -299,7 +299,6 @@ $app->get('/guest_passes/:id', function($id) {
     echo json_encode($data);
 });
 
-
 // GET - guest_passes/info/:id - Get Guest Pass Info based on given pass_id
 $app->get('/guest_passes/info/:tntid/:passid', function($tnt_id, $pass_id) {
     $db = getConnection();
@@ -329,8 +328,9 @@ $app->get('/guest_passes/info/:tntid/:passid', function($tnt_id, $pass_id) {
                         } else if($row['pass_type'] == 'food') {
                             $label = 'Food Delivery: ' . $date;
                         }
-                        $rows[$i] = $row;                        
-                        $rows[$i]['created_by'] = ucfirst($row['tnt_fname']) . ucfirst( substr($row['tnt_lname'], 0, 1) );
+                        $rows[$i] = $row;     
+                        $rows[$i]['pass_date'] = date("m-d-Y", $row['pass_date']);
+                        $rows[$i]['created_by'] = ucfirst($row['tnt_fname']) . ' ' . ucfirst( substr($row['tnt_lname'], 0, 1) );
                         $rows[$i]['label_title'] = $label;
                     }                    
                 }
@@ -358,6 +358,34 @@ $app->get('/guest_passes/info/:tntid/:passid', function($tnt_id, $pass_id) {
     echo json_encode($data);
 });
 
+// DELETE: /contacts/:id -> DELETE a Concact
+$app->delete('/guest_passes/:tntid/:passid', function($tnt_id, $pass_id) {
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($tnt_id);
+    $pass_id = $db->real_escape_string($pass_id);
+    
+    $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $tun_id = $row['tun_id'];
+        }
+        $sql = 'DELETE FROM GuestPass WHERE pass_id=? AND tun_id=?';
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->bind_param('ii', $pass_id, $tun_id);
+            $stmt->execute();
+            $db->close();
+            $data['status'] = 'success';
+
+        } catch(Exception $e) {
+            echo 'Error: ' . $e->getMessage();
+        }
+    } else {
+        $data['status'] = 'failure';
+    }
+    echo json_encode($data);
+});
 
 /**
  * Login ROUTES
