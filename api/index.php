@@ -215,7 +215,7 @@ $app->post('/guest_passes', function() {
         $fname = NULL;
         $lname = NULL;
     }
-    $date = date("m-d-Y");
+    $today = date("Y-m-d H:i:s");
     
     $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
     $q = $db->query($sql);
@@ -226,7 +226,7 @@ $app->post('/guest_passes', function() {
         $sql = "INSERT INTO GuestPass (tnt_id, tun_id, pass_type, pass_fname, pass_lname, pass_date) VALUES (?, ?, ?, ?, ?, ?)";
         try {
             $stmt = $db->prepare($sql);
-            $stmt->bind_param('iissss', $tnt_id, $tun_id, $type, $fname, $lname, $date);
+            $stmt->bind_param('iissss', $tnt_id, $tun_id, $type, $fname, $lname, $today);
             $stmt->execute();
             $db->close();
         } catch (Exception $e) {
@@ -264,7 +264,14 @@ $app->get('/guest_passes/:id', function($id) {
                     $current_date = date("m-d-Y");
                     $date = date( "m-d-Y", strtotime($row['pass_date']) );
                     if($current_date == $date) {
-                        $rows[] = $row;
+                        $label = '';
+                        if($row['pass_type'] == 'guestpass') {
+                            $label = 'Guest: ' . ucfirst($row['pass_fname']) . ' - ' . $date;
+                        } else if($row['pass_type'] == 'food') {
+                            $label = 'Food Delivery: ' . $date;
+                        }
+                        $rows[$i] = $row;
+                        $rows[$i]['label_title'] = $label;
                         $i += 1;
                     }                    
                 }
@@ -291,6 +298,66 @@ $app->get('/guest_passes/:id', function($id) {
     }
     echo json_encode($data);
 });
+
+
+// GET - guest_passes/info/:id - Get Guest Pass Info based on given pass_id
+$app->get('/guest_passes/info/:tntid/:passid', function($tnt_id, $pass_id) {
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($tnt_id);
+    $pass_id = $db->real_escape_string($pass_id);
+    
+    $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $tun_id = $row['tun_id'];
+        }
+    
+        $sql = "SELECT Tenant.tnt_fname, Tenant.tnt_lname, GuestPass.pass_id, GuestPass.pass_type, GuestPass.pass_fname, GuestPass.pass_lname, GuestPass.pass_date FROM GuestPass JOIN Tenant ON GuestPass.tnt_id = Tenant.tnt_id WHERE tun_id=$tun_id AND pass_id=$pass_id";
+        try {
+            $i = 0; $rows = NULL;
+            $db = getConnection();
+            $q = $db->query($sql);
+            if($q->num_rows == 1) {
+                while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                    $current_date = date("m-d-Y");
+                    $date = date( "m-d-Y", strtotime($row['pass_date']) );
+                    if($current_date == $date) {
+                        $label = '';
+                        if($row['pass_type'] == 'guestpass') {
+                            $label = 'Guest: ' . ucfirst($row['pass_fname']) . ' - ' . $date;
+                        } else if($row['pass_type'] == 'food') {
+                            $label = 'Food Delivery: ' . $date;
+                        }
+                        $rows[$i] = $row;                        
+                        $rows[$i]['created_by'] = ucfirst($row['tnt_fname']) . ucfirst( substr($row['tnt_lname'], 0, 1) );
+                        $rows[$i]['label_title'] = $label;
+                    }                    
+                }
+                // Format Response
+                $data['status'] = 'success';
+                $data['guest_passes'] = 1;
+                $data['data'] = $rows;
+
+            } else {
+                // Format Response
+                $data['status'] = 'success';
+                $data['guest_passes'] = 0;
+                $data['data'] = NULL;
+            }
+            // Free result and close connection
+            $q->free();
+            $db->close();
+        } catch (PDOException $e) {
+            echo '{"error"}' . $e->getMessage();
+        }
+    } else {
+        // Format Response
+        $data['status'] = 'failure';
+    }
+    echo json_encode($data);
+});
+
 
 /**
  * Login ROUTES
