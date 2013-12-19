@@ -208,9 +208,14 @@ $app->post('/guest_passes', function() {
     $db = getConnection();
     $tnt_id = $db->real_escape_string($notification->tnt_id);
     $type = $db->real_escape_string($notification->type);
-    $fname = $db->real_escape_string($notification->fname);
-    $lname = $db->real_escape_string($notification->lname);
-    $date = data("m-d-Y");
+    if($type == 'guestpass') {
+        $fname = $db->real_escape_string($notification->fname);
+        $lname = $db->real_escape_string($notification->lname);
+    } else {
+        $fname = NULL;
+        $lname = NULL;
+    }
+    $date = date("m-d-Y");
     
     $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
     $q = $db->query($sql);
@@ -218,10 +223,10 @@ $app->post('/guest_passes', function() {
         while($row = $q->fetch_array(MYSQLI_ASSOC)) {
             $tun_id = $row['tun_id'];
         }
-        $sql = "INSERT INTO NeighborNotification (tnt_id, tun_id, pass_type, pass_fname, pass_lname, pass_date) VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO GuestPass (tnt_id, tun_id, pass_type, pass_fname, pass_lname, pass_date) VALUES (?, ?, ?, ?, ?, ?)";
         try {
             $stmt = $db->prepare($sql);
-            $stmt->bind_param('iisss', $tnt_id, $tun_id, $type, $fname, $lname, $date);
+            $stmt->bind_param('iissss', $tnt_id, $tun_id, $type, $fname, $lname, $date);
             $stmt->execute();
             $db->close();
         } catch (Exception $e) {
@@ -238,7 +243,7 @@ $app->post('/guest_passes', function() {
 }); // ***END POST - neighbor_notification
 
 // GET - neighbor_notification - Get Neigbor Notifications for tenants unit
-$app->get('/guess_passes/:id', function($id) {
+$app->get('/guest_passes/:id', function($id) {
     $db = getConnection();
     $tnt_id = $db->real_escape_string($id);
     
@@ -258,7 +263,7 @@ $app->get('/guess_passes/:id', function($id) {
                 while($row = $q->fetch_array(MYSQLI_ASSOC)) {
                     $current_date = date("m-d-Y");
                     $date = date( "m-d-Y", strtotime($row['pass_date']) );
-                    if($current_date <= $date) {
+                    if($current_date == $date) {
                         $rows[] = $row;
                         $i += 1;
                     }                    
