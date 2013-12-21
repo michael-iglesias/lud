@@ -199,7 +199,7 @@ $app->get('/maintenance/history/:id', function($id) {
  * 1. POST -> /neighbor_notification
  * 2. GET -> /neighbor_notification
  */
-// POST: neighbor_notification - Create Neighbor Notification
+// POST: guest_passes - Create Guest Pass
 $app->post('/guest_passes', function() {
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
@@ -329,7 +329,7 @@ $app->get('/guest_passes/info/:tntid/:passid', function($tnt_id, $pass_id) {
                             $label = 'Food Delivery: ' . $date;
                         }
                         $rows[$i] = $row;     
-                        $rows[$i]['pass_date'] = date("m-d-Y", $row['pass_date']);
+                        $rows[$i]['pass_date'] = $date;
                         $rows[$i]['created_by'] = ucfirst($row['tnt_fname']) . ' ' . ucfirst( substr($row['tnt_lname'], 0, 1) );
                         $rows[$i]['label_title'] = $label;
                     }                    
@@ -358,7 +358,7 @@ $app->get('/guest_passes/info/:tntid/:passid', function($tnt_id, $pass_id) {
     echo json_encode($data);
 });
 
-// DELETE: /contacts/:id -> DELETE a Concact
+// DELETE: /guest_passes/:tntid/:passid -> DELETE a Concact
 $app->delete('/guest_passes/:tntid/:passid', function($tnt_id, $pass_id) {
     $db = getConnection();
     $tnt_id = $db->real_escape_string($tnt_id);
@@ -386,6 +386,63 @@ $app->delete('/guest_passes/:tntid/:passid', function($tnt_id, $pass_id) {
     }
     echo json_encode($data);
 });
+
+
+
+/**
+ * My Profile ROUTES
+ * 1. UPDATE -> /my_profile/:id
+ * 2. GET -> /my_profile/:id
+ */
+// UPDATE: /my_profile/:id - Update Profile Info
+$app->update('/my_profile', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $profile = json_decode($body);
+    
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($profile->tnt_id);
+    $phone = $db->real_escape_string($profile->phone_number);
+    $email = $db->real_escape_string($profile->email_address);
+    
+    $sql = 'UPDATE Tenant SET tnt_email=?, tnt_phone=? WHERE tnt_id=?';
+    try {
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param('ssi', $email, $phone, $tnt_id);
+        $stmt->execute();
+        $db->close();
+    } catch (Exception $e) {
+        echo 'Error: ' . $e->getMessage();
+    }
+    $data['status'] = 'success';
+    
+    echo json_encode($data);
+});
+
+
+// GET: /my_profile/:id - Get Profile Info
+$app->get('/my_profile/:id', function($id) {
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($id);
+    
+    $sql = "SELECT Tenant.tnt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_phone, Tenant.tnt_email, Tenant.tnt_avatar, Leasing.lease_id, Leasing.tun_id, Leasing.urm_id, UnitRoom.urm_id, UnitRoom.urm_room_number, TowerUnit.tun_number, TenementTower.tow_name FROM Tenant LEFT JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id Left JOIN UnitRoom ON Leasing.urm_id = UnitRoom.urm_id LEFT JOIN TowerUnit ON UnitRoom.tun_id = TowerUnit.tun_id LEFT JOIN TenementTower ON TowerUnit.tow_id = TenementTower.tow_id WHERE Tenant.tnt_id=$tnt_id";
+    $q = $db->query($sql);
+    if($q->num_rows == 1) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $rows[] = $row;
+        }
+        $data['status'] = 'success';
+        $data['profile'] = $q->num_rows;
+        $data['data'] = $rows;
+    } else {
+        $data['status'] = 'failure';
+        $data['profile'] = $q->num_rows;
+        $data['data'] = NULL;
+    }
+    echo json_encode($data);
+});
+
+
 
 /**
  * Login ROUTES
