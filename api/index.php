@@ -464,6 +464,36 @@ $app->get('/my_profile/notification_settings/:id', function($id) {
     echo json_encode($data);
 }); // ***END GET - /my_profile/notification_settings/:id
 
+// PUT: /my_profile/:id - Update Profile Info
+$app->put('/my_profile/notification_settings', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $profile = json_decode($body);
+    
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($profile->tnt_id);
+    $package_email = $db->real_escape_string($profile->package_email);
+    $package_sms = $db->real_escape_string($profile->package_sms);
+    $general_email = $db->real_escape_string($profile->general_email);
+    $general_sms = $db->real_escape_string($profile->general_sms);
+    $maint_email = $db->real_escape_string($profile->maint_email);
+    $maint_sms = $db->real_escape_string($profile->maint_sms);
+    
+    $sql = 'UPDATE NotificationSetting SET package_email=?, package_sms=?, general_email=?, general_sms=?, maint_email=?, maint_sms=? WHERE tnt_id=?';
+    try {
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param('ssssssi', $package_email, $package_sms, $general_email, $general_sms, $maint_email, $maint_sms, $tnt_id);
+        $stmt->execute();
+        $db->close();
+    } catch (Exception $e) {
+        echo 'Error: ' . $e->getMessage();
+    }
+    $data['status'] = 'success';
+    
+    echo json_encode($data);
+}); // ***END PUT - /my_profile/notification_settings
+
+
 
 /**
  * Login ROUTES
