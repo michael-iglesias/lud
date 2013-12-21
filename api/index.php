@@ -393,9 +393,10 @@ $app->delete('/guest_passes/:tntid/:passid', function($tnt_id, $pass_id) {
  * My Profile ROUTES
  * 1. UPDATE -> /my_profile/:id
  * 2. GET -> /my_profile/:id
+ * 3. GET -> /my_profile/notification_settings/:id
  */
 // UPDATE: /my_profile/:id - Update Profile Info
-$app->update('/my_profile', function() {
+$app->put('/my_profile', function() {
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
     $profile = json_decode($body);
@@ -442,6 +443,26 @@ $app->get('/my_profile/:id', function($id) {
     echo json_encode($data);
 });
 
+$app->get('/my_profile/notification_settings/:id', function($id) {
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($id);
+    
+    $sql = "SELECT Tenant.tnt_id, NotificationSetting.package_email, NotificationSetting.package_sms, NotificationSetting.general_email, NotificationSetting.general_sms, NotificationSetting.maint_email, NotificationSetting.maint_sms FROM Tenant LEFT JOIN NotificationSetting ON Tenant.tnt_id = NotificationSetting.tnt_id WHERE Tenant.tnt_id=$tnt_id";
+    $q = $db->query($sql);
+    if($q->num_rows == 1) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $rows[] = $row;
+        }
+        $data['status'] = 'success';
+        $data['profile'] = $q->num_rows;
+        $data['data'] = $rows;
+    } else {
+        $data['status'] = 'failure';
+        $data['profile'] = $q->num_rows;
+        $data['data'] = NULL;
+    }
+    echo json_encode($data);
+}); // ***END GET - /my_profile/notification_settings/:id
 
 
 /**
