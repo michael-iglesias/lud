@@ -494,6 +494,52 @@ $app->put('/my_profile/notification_settings', function() {
 }); // ***END PUT - /my_profile/notification_settings
 
 
+// PUT - /personality_questionnaire - Process Personality Questionnaire
+$app->put('personality_questionnaire', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $profile = json_decode($body);
+    $db = getConnection();
+    
+    $tnt_id = $db->real_escape_string($profile->tnt_id);
+    $study = $db->real_escape_string($profile->study);
+    $neat = $db->real_escape_string($profile->neat);
+    $smoke = $db->real_escape_string($profile->smoke);
+    $party = $db->real_escape_string($profile->party);
+    $chef = $db->real_escape_string($profile->chef);
+    $gym = $db->real_escape_string($profile->gym);
+    $sports = $db->real_escape_string($profile->sports);
+    $movies = $db->real_escape_string($profile->movies);
+    $pets = $db->real_escape_string($profile->pets);
+    $tv = $db->real_escape_string($profile->tv);
+    $greek = $db->real_escape_string($profile->greek);
+    
+    if($study == 'yes') { $study = TRUE; } else { $study = FALSE; }
+    if($neat == 'yes') { $neat = TRUE; } else { $neat = FALSE; }
+    if($smoke == 'yes') { $smoke = TRUE; } else { $smoke = FALSE; }
+    if($party == 'yes') { $party = TRUE; } else { $party = FALSE; }
+    if($chef == 'yes') { $chef = TRUE; } else { $chef = FALSE; }
+    if($gym == 'yes') { $gym = TRUE; } else { $gym = FALSE; }
+    if($sports == 'yes') { $sports = TRUE; } else { $sports = FALSE; }
+    if($movies == 'yes') { $movies = TRUE; } else { $movies = FALSE; }
+    if($pets == 'yes') { $pets = TRUE; } else { $pets = FALSE; }
+    if($tv == 'yes') { $tv = TRUE; } else { $tv = FALSE; }
+    if($greek == 'yes') { $greek = TRUE; } else { $greek = FALSE; }
+    
+    $sql = 'UPDATE PersonalityProfile SET prof_study=?, prof_neat=?, prof_smoke=?, prof_party=?, prof_chef=?, prof_gym=?, prof_sports=?, prof_movies=?, prof_pets=?, prof_tv=?, prof_greek=? WHERE tnt_id=?';
+    try {
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param('ssssssssssssi', $study, $neat, $smoke, $party, $chef, $gym, $sports, $movies, $pets, $tv, $greek, $tnt_id);
+        $stmt->execute();
+        $db->close();
+    } catch (Exception $e) {
+        echo 'Error: ' . $e->getMessage();
+    }
+    $data['status'] = 'success';
+    
+    echo json_encode($data);
+});
+
 
 /**
  * Login ROUTES
