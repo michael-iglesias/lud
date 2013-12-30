@@ -558,28 +558,32 @@ $app->post('/cart/add', function() {
     $prod_sku = $db->real_escape_string($product->sku);
     $prod_cart = $db->real_escape_string($product->cart);
     
-    $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
-    $q = $db->query($sql);
-    if($q->num_rows > 0) {
-        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
-            $tun_id = $row['tun_id'];
-        }
-        $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart) VALUES (?, ?, ?, ?, ?, ?)";
-        try {
-            $stmt = $db->prepare($sql);
-            $stmt->bind_param('iiiss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart);
-            $stmt->execute();
-            $db->close();
-        } catch (Exception $e) {
-            echo 'Error: ' . $e->getMessage();
-        }
+    if($prod_cart == 'personal') {
+        $tun_id = NULL;
+    } else {
+        $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+        $q = $db->query($sql);
+
+        if($q->num_rows > 0) {
+            while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                $tun_id = $row['tun_id'];
+            }
+        } else { $tun_id = NULL; }
+    }
+
+    $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart) VALUES (?, ?, ?, ?, ?, ?)";
+    try {
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param('iiiss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart);
+        $stmt->execute();
+        $db->close();
+        
         // Format Response
         $data['status'] = 'success';
-    } else {
-        // Format Response
-        $data['status'] = 'failure';
+    } catch (Exception $e) {
+        echo 'Error: ' . $e->getMessage();
     }
-    
+     
     echo json_encode($data);
 });
 
@@ -595,15 +599,15 @@ $app->post('/cart', function() {
         $type = $db->real_escape_string($cart->type);
         
         if($type == 'personal') {
-            $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=? AND order_status=NULL";
+            $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND order_status=NULL";
         } else {
             $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$id";
             $q1 = $db->query($sql);
             if($q1->num_rows > 0) {
                 while($row = $q->fetch_array(MYSQLI_ASSOC)) {
-                    $tun_id = $row['tun_id'];
+                    $id = $row['tun_id'];
                 }
-                $sql = "SELECT * FROM ShoppingCart WHERE tun_id=? AND order_status=NULL";
+                $sql = "SELECT * FROM ShoppingCart WHERE tun_id=$id AND order_status=NULL";
             }
         }
         
