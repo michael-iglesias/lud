@@ -47,7 +47,7 @@
 				
 			});
 		</script>
-		
+
 	</head>
 	<body>
 	
@@ -111,6 +111,38 @@
                                                                             Notification center
                                                                     </a>
                                                                 </li>
+                                                                <li>
+                                                                    <a href="<?= base_url(); ?>index.php/tenement/roommate_matching">
+                                                                            <span class="awe-group"></span>
+                                                                            Roommate Matching
+                                                                    </a>
+                                                                </li>
+                                                                <li class="dropdown">
+                                                                    <a class="dropdown-toggle" data-toggle="dropdown" href="ui-buttons.html">
+                                                                            <div><span class="awe-bar-chart"></span> Analytics</div>
+                                                                            <span class="caret"></span>
+                                                                    </a>
+                                                                    <ul class="dropdown-menu pull-right">
+                                                                        <li>
+                                                                                <a href="<?= base_url(); ?>index.php/tenement/analytics/impressions">
+                                                                                        <span class="awe-table"></span>
+                                                                                        Tenant Impressions
+                                                                                </a>
+                                                                        </li>
+                                                                        <li>
+                                                                                <a href="<?= base_url(); ?>index.php/tenement/analytics/maintenance">
+                                                                                        <span class="awe-group"></span>
+                                                                                        Maintenance Request Stats
+                                                                                </a>
+                                                                        </li>
+                                                                        <li>
+                                                                                <a href="<?= base_url(); ?>index.php/tenement/analytics/guestpasses">
+                                                                                        <span class="awe-tasks"></span>
+                                                                                        Guest Pass Stats
+                                                                                </a>
+                                                                        </li>
+                                                                    </ul>
+								</li>
 							</ul>
 						</nav>
 						

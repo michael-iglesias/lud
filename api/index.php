@@ -495,7 +495,7 @@ $app->put('/my_profile/notification_settings', function() {
 
 
 // PUT - /personality_questionnaire - Process Personality Questionnaire
-$app->put('personality_questionnaire', function() {
+$app->put('/personality_questionnaire', function() {
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
     $profile = json_decode($body);
@@ -529,7 +529,7 @@ $app->put('personality_questionnaire', function() {
     $sql = 'UPDATE PersonalityProfile SET prof_study=?, prof_neat=?, prof_smoke=?, prof_party=?, prof_chef=?, prof_gym=?, prof_sports=?, prof_movies=?, prof_pets=?, prof_tv=?, prof_greek=? WHERE tnt_id=?';
     try {
         $stmt = $db->prepare($sql);
-        $stmt->bind_param('ssssssssssssi', $study, $neat, $smoke, $party, $chef, $gym, $sports, $movies, $pets, $tv, $greek, $tnt_id);
+        $stmt->bind_param('dddddddddddi', $study, $neat, $smoke, $party, $chef, $gym, $sports, $movies, $pets, $tv, $greek, $tnt_id);
         $stmt->execute();
         $db->close();
     } catch (Exception $e) {
@@ -540,6 +540,96 @@ $app->put('personality_questionnaire', function() {
     echo json_encode($data);
 });
 
+
+/**
+ * Shopping Cart ROUTES
+ * 1. /cart/add -> Add Product To Cart
+ */
+// POST: /cart/add
+$app->post('/cart/add', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $product = json_decode($body);
+    
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($product->tntID);
+    $prod_id = $db->real_escape_string($product->prodID);
+    $prod_name = $db->real_escape_string($product->name);
+    $prod_sku = $db->real_escape_string($product->sku);
+    $prod_cart = $db->real_escape_string($product->cart);
+    
+    $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $tun_id = $row['tun_id'];
+        }
+        $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart) VALUES (?, ?, ?, ?, ?, ?)";
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->bind_param('iiiss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart);
+            $stmt->execute();
+            $db->close();
+        } catch (Exception $e) {
+            echo 'Error: ' . $e->getMessage();
+        }
+        // Format Response
+        $data['status'] = 'success';
+    } else {
+        // Format Response
+        $data['status'] = 'failure';
+    }
+    
+    echo json_encode($data);
+});
+
+// POST ->' /cart
+$app->post('/cart', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $cart = json_decode($body);
+    
+    try {
+        $db = getConnection();
+        $id = $db->real_escape_string($cart->id);
+        $type = $db->real_escape_string($cart->type);
+        
+        if($type == 'personal') {
+            $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=? AND order_status=NULL";
+        } else {
+            $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$id";
+            $q1 = $db->query($sql);
+            if($q1->num_rows > 0) {
+                while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                    $tun_id = $row['tun_id'];
+                }
+                $sql = "SELECT * FROM ShoppingCart WHERE tun_id=? AND order_status=NULL";
+            }
+        }
+        
+        $q = $db->query($sql);
+        if($q->num_rows > 0) {
+            while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                    $rows[] = $row;
+            }
+            // Format Response
+            $data['status'] = 'success';
+            $data['login_match'] = $q->num_rows;
+            $data['data'] = $rows;
+        } else {
+            $data['status'] = 'success';
+            $data['login_match'] = $q->num_rows;
+            $data['data'] = NULL;
+        }
+        // Free result and close connection
+        $q->free();
+        $db->close();
+
+        echo json_encode($data);
+    } catch (PDOException $e) {
+        echo '{"error"}' . $e->getMessage();
+    }
+}); // ***END /cart
 
 /**
  * Login ROUTES

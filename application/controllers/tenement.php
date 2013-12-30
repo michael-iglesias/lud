@@ -107,6 +107,18 @@ class Tenement extends CI_Controller {
         }
     } // ***END load_unit_tenants() Method
     
+    public function load_possible_roommates() {
+        $this->_authorize_user();
+        $tun_id = $this->input->post('tunID');
+        if(is_numeric($tun_id)) { $result = $this->tenement_model->getCompatibleRoommates($tun_id); }
+        if($result) {
+            $data['tenants'] = $result;
+            $data['tun_id'] = $tun_id;
+            $this->load->view('tenement_tier/pages/display_possible_roommates_view', $data);
+        }
+    } // ***END load_possible_roommates() Method
+    
+    
     /**************************************************************************
      * ************************************************************************
      * Manage Unit Methods
@@ -121,17 +133,15 @@ class Tenement extends CI_Controller {
         $this->_authorize_user();
         $tun_id = $this->uri->segment(3);
         
-        
-        var_dump($this->session->all_userdata()); die();
-        
         $data['unit_info'] = $this->tenement_model->getUnitInfo($tun_id);
-        
-        $data['tower_info'] = $this->tenement_model->getTowerInfo($tow_id);
-        $data['tower_units'] = $this->tenement_model->getTowerUnits($tow_id);
+        $data['maintenance_requests'] = $this->tenement_model->getUnitMaintenanceRequests($tun_id);
+        $data['guest_passes'] = $this->tenement_model->getUnitGuestPasses($tun_id);
+        $data['unit_tenants'] = $this->tenement_model->getUnitTenants($tun_id);
+        $data['packages'] = $this->tenement_model->getUnitPackages($tun_id);
         
         $data['page_title'] = 'Manage Property - Let Us Dorm';
-        $data['page_header_icon'] = 'awe-table';
-        $data['page_header_title'] = 'Unit: ' . $data['tower_info'][0]['tow_name'];
+        $data['page_header_icon'] = 'awe-key';
+        $data['page_header_title'] = 'Unit: ' . $data['unit_info']['unit_info'][0]['tun_number'];
         $data['session_data'] = $this->session_data;
         
         $this->load->view('tenement_tier/common/header_view', $data);
@@ -139,7 +149,14 @@ class Tenement extends CI_Controller {
         $this->load->view('tenement_tier/common/footer_view');
     } // ***END manage_unit() Method
     
-    
+    public function insert_unit_analytics() {
+        $tun_id = $this->input->post('tunID');
+        $data['tun_id'] = $tun_id;
+        
+        $this->load->view('tenement_tier/pages/analytics/unit_analytics_view', $data);
+    } // ***END insert_unit_analytics() Method
+
+
     /**************************************************************************
      * ************************************************************************
      * Tenant Methods
@@ -255,7 +272,6 @@ class Tenement extends CI_Controller {
     
     /**************************************************************************
      * ************************************************************************
-     * 
      * Employee Methods
      * - employees()
      * - add_employee()
@@ -445,7 +461,6 @@ class Tenement extends CI_Controller {
         endforeach;    
     } 
     
-
     /*****************************************
      * Notification Center
      * 1) notification_center()
@@ -550,6 +565,61 @@ class Tenement extends CI_Controller {
             echo 2;
         }
     } // ***END send_notification() Method
+
+    
+    /*****************************************
+     * ROOMMATE MATCHING METHOD
+     * 1) roommate_matching()
+     * 2) 
+     * ***************************************
+     */
+    public function roommate_matching() {
+        $this->_authorize_user();
+        $data['page_title'] = 'Roommate Matching';
+        $data['page_header_icon'] = 'awe-group';
+        $data['page_header_title'] = 'Roommate Matching';
+        $data['session_data'] = $this->session_data;
+        
+        $this->load->view('tenement_tier/common/header_view', $data);
+        $this->load->view('tenement_tier/pages/roommate_matching_view', $data);
+        $this->load->view('tenement_tier/common/footer_view');
+    } // ***END roommate matching() Method
+    
+    
+    /*****************************************
+     * Analytical Methods
+     * 1) analytics()
+     * 2) 
+     * ***************************************
+     */
+    public function analytics() {
+        $this->_authorize_user();
+        $type = $this->uri->segment(3);
+        if($type == 'impressions') {
+            $title = 'Impressions';
+        } else if($type == 'maintenance') {
+            $title = 'Analytics - Maintenance Requests';
+        } else if($type == 'guestpasses') {
+            $title = 'Analytics - Issued Guest Passes';
+        }
+        $data['page_title'] = 'Analytics - Let Us Dorm';
+        $data['page_header_icon'] = 'awe-bar-chart';
+        $data['page_header_title'] = $title;
+        $data['session_data'] = $this->session_data;
+        
+        
+        $this->load->view('tenement_tier/common/header_view', $data);
+        if($type == 'impressions') {
+            $this->load->view('tenement_tier/pages/analytics/impressions_view', $data);
+        } else if($type == 'maintenance') {
+            $this->load->view('tenement_tier/pages/analytics/maintenance_view', $data);
+        } else if($type == 'guestpasses') {
+            $this->load->view('tenement_tier/pages/analytics/guestpasses_view', $data);
+        }
+        $this->load->view('tenement_tier/common/footer_view');
+    } // ***END analytics() Method
+    
+    
     
     /*****************************************
      * Login Method

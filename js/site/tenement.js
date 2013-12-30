@@ -52,7 +52,6 @@ function addBuilding() {
     
 } // ***END addBuilding()
 
-
 // Function: displayUnitTenants()
 // Description: Asynchronously Load <div id="unitoccupancies-modal"> with the Tenants whom reside in the 
 //              unit that has been selected
@@ -165,7 +164,6 @@ function deleteEmployee(employeeID) {
         }); // ***END $.ajax call
     }
 } // ***END deleteEmployee()
-
 
 // Function: addTenant()
 // Add new Tenant
@@ -294,22 +292,60 @@ function assignTenantToUnit(tnt_id, tun_id, tun_name) {
 } // ***END assignTenantToUnit()
 
 function loadTenantList(tnt_id) {
-$.ajax({
-            type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/load_tenant_list/',
-            data: {tntID: tnt_id, tunID: tun_id},
-            success: function(data) {
-                $('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
-                delayedRedirect();
-                
-            }, 
-            error: function() {
-                    alert('System Error! Please try again.');
-            },
-            complete: function() {
-                    console.log('completed')
-            }
-        }); // ***END $.ajax call    
+    $.ajax({
+        type: "POST",
+        url: 'http://localhost/LetUsDorm/index.php/tenement/load_tenant_list/',
+        data: {tntID: tnt_id, tunID: tun_id},
+        success: function(data) {
+            $('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
+            delayedRedirect();
+
+        }, 
+        error: function() {
+                alert('System Error! Please try again.');
+        },
+        complete: function() {
+                console.log('completed')
+        }
+    }); // ***END $.ajax call    
+} // ***END loadTenantList()
+
+function getPossibleRoommates(tun_id) {
+    $.ajax({
+        type: "POST",
+        url: 'http://localhost/LetUsDorm/index.php/tenement/load_possible_roommates/',
+        data: {tunID: tun_id},
+        success: function(data) {
+            //$('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
+            $('#tenantassignment-modal-body').html(data);
+
+        }, 
+        error: function() {
+                alert('System Error! Please try again.');
+        },
+        complete: function() {
+                console.log('completed')
+        }
+    }); // ***END $.ajax call 
+} // ***END getPossibleRoommates()
+
+function insertAnalytics(tun_id) {
+    $.ajax({
+        type: "POST",
+        url: 'http://localhost/LetUsDorm/index.php/tenement/insert_unit_analytics/',
+        data: {tunID: tun_id},
+        success: function(data) {
+            //$('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
+            $('#analytics .accordion-inner').html(data);
+
+        }, 
+        error: function() {
+                alert('System Error! Please try again.');
+        },
+        complete: function() {
+                console.log('completed')
+        }
+    }); // ***END $.ajax call
 }
 
 function logPackage() {

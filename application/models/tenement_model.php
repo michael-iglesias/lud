@@ -37,6 +37,71 @@ class Tenement_model extends CI_Model {
         return $data;
     } // ***END getTowerUnits() Method
     
+    /************************************************************************
+     * Unit Methods
+     * 1) getUnitInfo()
+     * 2) getUnitMaintenanceRequests()
+     * 3) getUnitGuestPasses()
+     * 4) getTenementTowerUnitVacancies()
+     * 5) getUnitTenants()
+     ************************************************************************/
+    public function getUnitInfo($tun_id) {
+        $sql = 'SELECT * FROM TowerUnit JOIN TenementTower WHERE TowerUnit.tun_id=?';
+        $q = $this->db->query($sql, $tun_id);
+        foreach($q->result_array() as $row) {
+            $data[] = $row;
+        }
+        $both['unit_info'] = $data;
+        
+        $sql = 'SELECT TowerUnit.tun_id, TowerUnit.tun_number, TowerUnit.tun_capacity, TowerUnit.tun_room_count, TowerUnit.tun_floor, (SELECT COUNT(*) FROM GuestPass WHERE tun_id=TowerUnit.tun_id) AS `Guest_Passes`, (SELECT COUNT(*) FROM Leasing WHERE tun_id=TowerUnit.tun_id) AS `Occupancies`, (SELECT COUNT(*) FROM MaintenanceTicket WHERE tun_id=TowerUnit.tun_id AND (mticket_status=\'open\' OR mticket_status=\'processing\')) AS `Maintenance_Tickets`, (SELECT COUNT(*) FROM PackageDelivered WHERE tun_id=TowerUnit.tun_id AND (pack_pickedup=\'no\')) AS `Pending_Packages` FROM TowerUnit WHERE tun_id=?;';
+        $qq = $this->db->query($sql, $tun_id);
+        foreach($qq->result_array() as $row) {
+            $data2[] = $row;
+        }
+        $both['unit_details'] = $data2;
+        
+        return $both;
+    } // ***END getUnitInfo($tun_id) Method
+    
+    public function getUnitMaintenanceRequests($tun_id) {
+        $sql = 'SELECT * FROM MaintenanceTicket WHERE tun_id=? AND (mticket_status="open" OR mticket_status="processing")';
+        $q = $this->db->query($sql, $tun_id);
+        if($q->num_rows() > 0) {
+            foreach($q->result_array() as $row) {
+                $data[] = $row;
+            }
+        } else {
+            $data = NULL;
+        }
+        return $data;
+    } // ***END getUnitMaintenanceRequests()
+    
+    public function getUnitGuestPasses($tun_id) {
+        $sql = 'SELECT * FROM GuestPass WHERE tun_id=? AND pass_redeemed="no"';
+        $q = $this->db->query($sql, $tun_id);
+        if($q->num_rows() > 0) {
+            foreach($q->result_array() as $row) {
+                $data[] = $row;
+            }
+        } else {
+            $data = NULL;
+        }
+        return $data;
+    } // ***END getUnitMaintenanceRequests()
+    
+    public function getUnitPackages($tun_id) {
+        $sql = 'SELECT * FROM PackageDelivered WHERE tun_id=? AND pack_pickedup="no"';
+        $q = $this->db->query($sql, $tun_id);
+        if($q->num_rows() > 0) {
+            foreach($q->result_array() as $row) {
+                $data[] = $row;
+            }
+        } else {
+            $data = NULL;
+        }
+        return $data;
+    }
+    
     public function getTenementTowerUnitVacancies($tow_id) {
         $sql = 'SELECT tun_id, (TowerUnit.tun_capacity - (SELECT COUNT(*) FROM Leasing WHERE Leasing.tun_id=TowerUnit.tun_id)) AS Units_With_Vacancies FROM TowerUnit WHERE TowerUnit.tow_id=? HAVING Units_With_Vacancies != 0';
         $q = $this->db->query($sql, $tow_id);
@@ -47,12 +112,37 @@ class Tenement_model extends CI_Model {
         $data = array();
         $sql = "SELECT Tenant.tnt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_avatar, Leasing.lease_id, Leasing.urm_id, UnitRoom.urm_id, UnitRoom.urm_room_number, UnitRoom.urm_master FROM Tenant JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id JOIN UnitRoom ON Leasing.urm_id = UnitRoom.urm_id WHERE Leasing.tun_id=?";
         $q = $this->db->query($sql, $tun_id);
-        foreach($q->result_array() as $row) {
-            $data[] = $row;
+        if($q->num_rows() > 0) {
+            foreach($q->result_array() as $row) {
+                $data[] = $row;
+            }
+        } else {
+            $data = NULL;
         }
         return $data;
     } // ***END getUnitTenants() Method
     
+    public function getCompatibleRoommates($tun_id) {
+        $tenants = $this->getUnitTenants($tun_id);
+        //return $tenants; exit();
+        if($tenants != NULL) {
+            foreach($tenants as $t) {
+                $sql ='SELECT u2.tnt_id, (SELECT tnt_fname FROM Tenant WHERE tnt_id = u2.tnt_id) AS  `First Name` , (SELECT tnt_lname FROM Tenant WHERE tnt_id = u2.tnt_id) AS  `Last Name` FROM PersonalityProfile u1, PersonalityProfile u2 WHERE u1.tnt_id =? AND u2.tnt_id !=? AND ((SELECT COUNT(*) FROM Leasing WHERE tun_id=? AND tnt_id=u2.tnt_id) <= 0) AND ((u1.prof_study <> u2.prof_study) + ( u1.prof_neat <> u2.prof_neat ) + ( u1.prof_smoke <> u2.prof_smoke ) + ( u1.prof_party <> u2.prof_party ) + ( u1.prof_chef <> u2.prof_chef ) + ( u1.prof_gym <> u2.prof_gym ) + ( u1.prof_sports <> u2.prof_sports ) + ( u1.prof_movies <> u2.prof_movies ) + ( u1.prof_pets <> u2.prof_pets ) + ( u1.prof_tv <> u2.prof_tv ) + ( u1.prof_greek <> u2.prof_greek ) <= 3) AND (u1.prof_smoke = u2.prof_smoke)';
+                $q = $this->db->query($sql, array($t['tnt_id'], $t['tnt_id'], $tun_id) );
+                if($q->num_rows() > 0) {
+                    foreach($q->result_array() as $row) {
+                        $data[] = $row;
+                    }
+                } else {
+                    $data = NULL;
+                }
+            }
+            $data = array_map('unserialize', array_unique(array_map('serialize', $data)));
+        } else {
+            $data = 'no_tenants';
+        }
+        return $data;
+    }
     /**************************************************************************
      * Manage Tenant Methods
      * - getTenants()
