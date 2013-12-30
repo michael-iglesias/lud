@@ -559,28 +559,29 @@ $app->post('/cart/add', function() {
     $prod_cart = $db->real_escape_string($product->cart);
     
     if($prod_cart == 'personal') {
-        $tun_id = NULL;
+        $tun_id = 0;
     } else {
-        $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
-        $q = $db->query($sql);
+        $sql1 = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+        $q = $db->query($sql1);
 
         if($q->num_rows > 0) {
             while($row = $q->fetch_array(MYSQLI_ASSOC)) {
                 $tun_id = $row['tun_id'];
             }
-        } else { $tun_id = NULL; }
+        } else { $tun_id = 0; }
     }
 
-    $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart) VALUES (?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart, order_processed) VALUES (?, ?, ?, ?, ?, ?, ?)";
     try {
         $stmt = $db->prepare($sql);
-        $stmt->bind_param('iiiss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart);
+        $stmt->bind_param('iiisssd', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart, 0);
         $stmt->execute();
         $db->close();
         
         // Format Response
         $data['status'] = 'success';
     } catch (Exception $e) {
+        
         echo 'Error: ' . $e->getMessage();
     }
      
