@@ -549,42 +549,42 @@ $app->put('/personality_questionnaire', function() {
 $app->post('/cart/add', function() {
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
-    $product = json_decode($body);
-    
+    $prod = json_decode($body);
     $db = getConnection();
-    $tnt_id = $db->real_escape_string($product->tntID);
-    $prod_id = $db->real_escape_string($product->prodID);
-    $prod_name = $db->real_escape_string($product->name);
-    $prod_sku = $db->real_escape_string($product->sku);
-    $prod_cart = $db->real_escape_string($product->cart);
+    
+    $id = $db->real_escape_string($prod->tntID);
+    $prod_id = $db->real_escape_string($prod->prodID);
+    $prod_name = $db->real_escape_string($prod->name);
+    $prod_sku = $db->real_escape_string($prod->sku);
+    $prod_cart = $db->real_escape_string($prod->cart); 
     
     if($prod_cart == 'personal') {
-        $tun_id = 0;
+        $tun_id = NULL;
     } else {
-        $sql1 = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
-        $q = $db->query($sql1);
-
+        $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$tnt_id";
+        $q = $db->query($sql);
         if($q->num_rows > 0) {
             while($row = $q->fetch_array(MYSQLI_ASSOC)) {
                 $tun_id = $row['tun_id'];
             }
-        } else { $tun_id = 0; }
+        } else {
+            $tun_id = NULL;
+        }
     }
 
     $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart, order_processed) VALUES (?, ?, ?, ?, ?, ?, ?)";
     try {
         $stmt = $db->prepare($sql);
-        $stmt->bind_param('iiisssd', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart, 0);
+        $stmt->bind_param('iiisss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart, "no");
         $stmt->execute();
         $db->close();
-        
+
         // Format Response
         $data['status'] = 'success';
     } catch (Exception $e) {
-        
         echo 'Error: ' . $e->getMessage();
     }
-     
+
     echo json_encode($data);
 });
 
