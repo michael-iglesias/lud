@@ -631,14 +631,17 @@ $app->post('/cart', function() {
             curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );   
             $response = curl_exec( $ch );   
             $result = json_decode($response);
+            $prod_id = $result->id;
+            $prod_name = $result->name;
+            $prod_sku = $result->sku;
             
             $item = array(
                 'scart_id' => $r['scart_id'],
                 'tnt_id' => $r['tnt_id'],
                 'tun_id' => $r['tun_id'],
-                'prod_id' => $result->id,
-                'prod_name' => $result->name,
-                'prod_sku' => $result->sku,
+                'prod_id' => $prod_id,
+                'prod_name' => $prod_name,
+                'prod_sku' => $prod_sku,
                 'prod_cart' => $r['prod_cart'],
                 'order_processed' => $r['order_processed']
             );
