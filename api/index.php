@@ -594,6 +594,8 @@ $app->post('/cart/add', function() {
 
 // POST ->' /cart
 $app->post('/cart', function() {
+    require('./bc.php');
+    $bc = new bc();
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
     $cart = json_decode($body);
@@ -621,27 +623,14 @@ $app->post('/cart', function() {
                 $rows[] = $row;
         }
         foreach($rows as $r) {
-            $api_url = "https://store-bwvr466.mybigcommerce.com/api/v2/products/" . $r['prod_id'] . ".json";
-            $ch = curl_init(); curl_setopt( $ch, CURLOPT_URL, $api_url ); 
-            curl_setopt( $ch, CURLOPT_HTTPHEADER, array ('Accept: application/json', 'Content-Length: 0') );                                   
-            curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'GET'); 
-            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, 0 ); 
-            curl_setopt( $ch, CURLOPT_USERPWD, "demo:df38dd10e9665a3cfa667817d78ec91ee9384bc3" ); 
-            curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
-            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );   
-            $response = curl_exec( $ch );   
-            $bg_result = json_decode($response);
-            $prod_id = $bg_result->id;
-            $prod_name = $bg_result->name;
-            $prod_sku = $bg_result->sku;
-            
+            $bc_reuslt = $bc->getProduct($r['prod_id']);
             $item = array(
                 'scart_id' => $r['scart_id'],
                 'tnt_id' => $r['tnt_id'],
                 'tun_id' => $r['tun_id'],
-                'prod_id' => $prod_id,
-                'prod_name' => $prod_name,
-                'prod_sku' => $prod_sku,
+                'prod_id' => $bc_result['id'],
+                'prod_name' => $bc_result['name'],
+                'prod_sku' => $bc_reuslt['sku'],
                 'prod_cart' => $r['prod_cart'],
                 'order_processed' => $r['order_processed']
             );
