@@ -546,10 +546,10 @@ $app->put('/personality_questionnaire', function() {
  * 1. /cart/add -> Add Product To Cart
  */
 // POST: /cart/add
-$app->get('/cart/add', function() {
-    /*$request = \Slim\Slim::getInstance()->request();
+$app->post('/cart/add', function() {
+    $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
-    $prod = json_decode($body); */
+    $prod = json_decode($body);
     $db = getConnection();
     
     $tnt_id = $db->real_escape_string($prod->tntID);
@@ -597,47 +597,46 @@ $app->post('/cart', function() {
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
     $cart = json_decode($body);
+    $db = getConnection();
     
-    try {
-        $db = getConnection();
-        $id = $db->real_escape_string($cart->id);
-        $type = $db->real_escape_string($cart->type);
-        
-        if($type == 'personal') {
-            $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND order_status=NULL";
-        } else {
-            $sql = "SELECT tun_id FROM Leasing WHERE tnt_id=$id";
-            $q1 = $db->query($sql);
-            if($q1->num_rows > 0) {
-                while($row = $q->fetch_array(MYSQLI_ASSOC)) {
-                    $id = $row['tun_id'];
-                }
-                $sql = "SELECT * FROM ShoppingCart WHERE tun_id=$id AND order_status=NULL";
-            }
-        }
-        
-        $q = $db->query($sql);
-        if($q->num_rows > 0) {
-            while($row = $q->fetch_array(MYSQLI_ASSOC)) {
-                    $rows[] = $row;
-            }
-            // Format Response
-            $data['status'] = 'success';
-            $data['login_match'] = $q->num_rows;
-            $data['data'] = $rows;
-        } else {
-            $data['status'] = 'success';
-            $data['login_match'] = $q->num_rows;
-            $data['data'] = NULL;
-        }
-        // Free result and close connection
-        $q->free();
-        $db->close();
+    
+    $id = $db->real_escape_string($cart->id);
+    $type = $db->real_escape_string($cart->type);
 
-        echo json_encode($data);
-    } catch (PDOException $e) {
-        echo '{"error"}' . $e->getMessage();
+    if($type == 'personal') {
+        $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND order_status=NULL";
+    } else {
+        $sql1 = "SELECT tun_id FROM Leasing WHERE tnt_id=$id";
+        $q1 = $db->query($sql1);
+        if($q1->num_rows > 0) {
+            while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                $id = $row['tun_id'];
+            }
+            $sql = "SELECT * FROM ShoppingCart WHERE tun_id=$id AND order_status=NULL";
+        }
     }
+    $q1->free();
+
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                $rows[] = $row;
+        }
+        // Format Response
+        $data['status'] = 'success';
+        $data['login_match'] = $q->num_rows;
+        $data['data'] = $rows;
+    } else {
+        $data['status'] = 'success';
+        $data['login_match'] = $q->num_rows;
+        $data['data'] = NULL;
+    }
+    // Free result and close connection
+    $q->free();
+    $db->close();
+
+    echo json_encode($data);
+    
 }); // ***END /cart
 
 /**
