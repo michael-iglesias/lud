@@ -14,6 +14,7 @@ $result = json_decode($response);
 
 
 echo $result->id;
+echo $result->name;
 echo '<br /><br />';
 var_dump($result); die();
 echo json_encode($result);

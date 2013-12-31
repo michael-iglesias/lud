@@ -630,10 +630,10 @@ $app->post('/cart', function() {
             curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
             curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );   
             $response = curl_exec( $ch );   
-            $result = json_decode($response);
-            $prod_id = $result->id;
-            $prod_name = $result->name;
-            $prod_sku = $result->sku;
+            $bg_result = json_decode($response);
+            $prod_id = $bg_result->id;
+            $prod_name = $bg_result->name;
+            $prod_sku = $bg_result->sku;
             
             $item = array(
                 'scart_id' => $r['scart_id'],
