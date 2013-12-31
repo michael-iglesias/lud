@@ -4,8 +4,9 @@
 class bc {
     
     public function getProduct($id) {
-        $id = (int) $id;
-        $api_url = 'https://store-bwvr466.mybigcommerce.com/api/v2/products/' . $id . '.json';
+        $nid = (int) $id;
+        
+        $api_url = 'https://store-bwvr466.mybigcommerce.com/api/v2/products/' . $nid . '.json';
         $ch = curl_init(); curl_setopt( $ch, CURLOPT_URL, $api_url ); 
         curl_setopt( $ch, CURLOPT_HTTPHEADER, array ('Accept: application/json', 'Content-Length: 0') );                                   
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'GET'); 
@@ -16,9 +17,13 @@ class bc {
         $response = curl_exec( $ch );   
         $result = json_decode($response); 
         
+        $a = $result->id;
+        
+        
+        
         $data['id'] = $result->id;
-        $data['name'] = $result->name;
-        $data['sku'] = $result->sku;
+        //$data['name'] = $result->name;
+        //$data['sku'] = $result->sku;
         /*echo $result->id;
         echo $result->name;
         echo '<br /><br />';
@@ -28,4 +33,6 @@ class bc {
 
     }
 }
+
+
 ?>

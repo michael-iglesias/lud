@@ -557,14 +557,16 @@ $app->post('/cart/add', function() {
     $prod_id = $db->real_escape_string($prod->prodID);
     $prod_name = $db->real_escape_string($prod->name);
     $prod_sku = $db->real_escape_string($prod->sku);
+    $prod_price = $db->real_escape_string($prod->price);
     $prod_cart = $db->real_escape_string($prod->cart); 
     /*$tnt_id = 1;
     $tun_id = 1;
     $prod_id = 620;
     $prod_name = 'asdflkj';
     $prod_sku = 'MB55';
-    $prod_cart = 'personal'; */
-    $prod_pro = 'no';
+    $prod_cart = 'personal';
+    $prod_price = 123.5000;
+    $prod_pro = 'no'; */
     
     if($prod_cart == 'personal') {
         $tun_id = NULL;
@@ -579,11 +581,10 @@ $app->post('/cart/add', function() {
             $tun_id = NULL;
         }
     }
-
-    $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart, order_processed) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_price, prod_cart, order_processed) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $db->prepare($sql);
-    $stmt->bind_param('iiissss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart, $prod_pro);
+    $stmt->bind_param('iiissdss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_price, $prod_cart, $prod_pro);
     $stmt->execute();
     $db->close();
     // Format Response
@@ -594,15 +595,13 @@ $app->post('/cart/add', function() {
 
 // POST ->' /cart
 $app->post('/cart', function() {
-    require('./bc.php');
-    $bc = new bc();
     $request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
     $cart = json_decode($body);
     $db = getConnection();
     
-    $id = $db->real_escape_string($cart->id);
-    $type = $db->real_escape_string($cart->type);
+      $id = (int) $db->real_escape_string($cart->id);
+      $type = $db->real_escape_string($cart->type);
 
     if($type == 'personal') {
         $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND order_processed='no'";
@@ -622,19 +621,20 @@ $app->post('/cart', function() {
         while($row = $q->fetch_array(MYSQLI_ASSOC)) {
                 $rows[] = $row;
         }
+        
         foreach($rows as $r) {
-            $bc_reuslt = $bc->getProduct($r['prod_id']);
-            $item = array(
+            $itm = array(
                 'scart_id' => $r['scart_id'],
                 'tnt_id' => $r['tnt_id'],
                 'tun_id' => $r['tun_id'],
-                'prod_id' => $bc_result['id'],
-                'prod_name' => $bc_result['name'],
-                'prod_sku' => $bc_result['sku'],
+                'prod_id' => $r['prod_id'],
+                'prod_name' => $r['prod_name'],
+                'prod_price' => money_format('%i', $r['prod_price']),
+                'prod_sku' => $r['prod_sku'],
                 'prod_cart' => $r['prod_cart'],
                 'order_processed' => $r['order_processed']
             );
-            $processed_rows[] = $item;
+            $processed_rows[] = $itm;
         }
         // Format Response
         $data['status'] = 'success';
