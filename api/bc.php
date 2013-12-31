@@ -1,6 +1,7 @@
 <?php
 
-$api_url = 'https://store-bwvr466.mybigcommerce.com/api/v2/products.json?category=502&limit=1&page=1';
+//$api_url = 'https://store-bwvr466.mybigcommerce.com/api/v2/products.json?category=502&limit=1&page=1';
+$api_url = 'https://store-bwvr466.mybigcommerce.com/api/v2/products/620.json';
 $ch = curl_init(); curl_setopt( $ch, CURLOPT_URL, $api_url ); 
 curl_setopt( $ch, CURLOPT_HTTPHEADER, array ('Accept: application/json', 'Content-Length: 0') );                                   
 curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'GET'); 
@@ -10,4 +11,9 @@ curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
 curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );   
 $response = curl_exec( $ch );   
 $result = json_decode($response); 
+
+
+echo $result->id;
+echo '<br /><br />';
+var_dump($result); die();
 echo json_encode($result);

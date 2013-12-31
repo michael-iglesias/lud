@@ -620,10 +620,34 @@ $app->post('/cart', function() {
         while($row = $q->fetch_array(MYSQLI_ASSOC)) {
                 $rows[] = $row;
         }
+        foreach($rows as $r) {
+            $api_url = "https://store-bwvr466.mybigcommerce.com/api/v2/products/" . $r['prod_id'] . ".json";
+            $ch = curl_init(); curl_setopt( $ch, CURLOPT_URL, $api_url ); 
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, array ('Accept: application/json', 'Content-Length: 0') );                                   
+            curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'GET'); 
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, 0 ); 
+            curl_setopt( $ch, CURLOPT_USERPWD, "demo:df38dd10e9665a3cfa667817d78ec91ee9384bc3" ); 
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
+            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );   
+            $response = curl_exec( $ch );   
+            $result = json_decode($response);
+            
+            $item = array(
+                'scart_id' => $r['scart_id'],
+                'tnt_id' => $r['tnt_id'],
+                'tun_id' => $r['tun_id'],
+                'prod_id' => $result->id,
+                'prod_name' => $result->name,
+                'prod_sku' => $result->sku,
+                'prod_cart' => $r['prod_cart'],
+                'order_processed' => $r['order_processed']
+            );
+            $processed_rows[] = $item;
+        }
         // Format Response
         $data['status'] = 'success';
         $data['cart_items'] = $q->num_rows;
-        $data['data'] = $rows;
+        $data['data'] = $processed_rows;
     } else {
         $data['status'] = 'success';
         $data['cart_items'] = $q->num_rows;
