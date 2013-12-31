@@ -546,17 +546,25 @@ $app->put('/personality_questionnaire', function() {
  * 1. /cart/add -> Add Product To Cart
  */
 // POST: /cart/add
-$app->post('/cart/add', function() {
-    $request = \Slim\Slim::getInstance()->request();
+$app->get('/cart/add', function() {
+    /*$request = \Slim\Slim::getInstance()->request();
     $body = $request->getBody();
-    $prod = json_decode($body);
+    $prod = json_decode($body); */
     $db = getConnection();
     
-    $id = $db->real_escape_string($prod->tntID);
+    $tnt_id = $db->real_escape_string($prod->tntID);
+    $tun_id = $db->real_escape_string($prod->tunID);
     $prod_id = $db->real_escape_string($prod->prodID);
     $prod_name = $db->real_escape_string($prod->name);
     $prod_sku = $db->real_escape_string($prod->sku);
     $prod_cart = $db->real_escape_string($prod->cart); 
+    /*$tnt_id = 1;
+    $tun_id = 1;
+    $prod_id = 620;
+    $prod_name = 'asdflkj';
+    $prod_sku = 'MB55';
+    $prod_cart = 'personal'; */
+    $prod_pro = 'no';
     
     if($prod_cart == 'personal') {
         $tun_id = NULL;
@@ -573,17 +581,13 @@ $app->post('/cart/add', function() {
     }
 
     $sql = "INSERT INTO ShoppingCart (tnt_id, tun_id, prod_id, prod_name, prod_sku, prod_cart, order_processed) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    try {
-        $stmt = $db->prepare($sql);
-        $stmt->bind_param('iiisss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart, "no");
-        $stmt->execute();
-        $db->close();
-
-        // Format Response
-        $data['status'] = 'success';
-    } catch (Exception $e) {
-        echo 'Error: ' . $e->getMessage();
-    }
+    
+    $stmt = $db->prepare($sql);
+    $stmt->bind_param('iiissss', $tnt_id, $tun_id, $prod_id, $prod_name, $prod_sku, $prod_cart, $prod_pro);
+    $stmt->execute();
+    $db->close();
+    // Format Response
+    $data['status'] = 'success';
 
     echo json_encode($data);
 });
