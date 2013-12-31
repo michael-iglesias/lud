@@ -630,7 +630,7 @@ $app->post('/cart', function() {
                 'tun_id' => $r['tun_id'],
                 'prod_id' => $bc_result['id'],
                 'prod_name' => $bc_result['name'],
-                'prod_sku' => $bc_reuslt['sku'],
+                'prod_sku' => $bc_result['sku'],
                 'prod_cart' => $r['prod_cart'],
                 'order_processed' => $r['order_processed']
             );

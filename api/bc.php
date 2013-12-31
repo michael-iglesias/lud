@@ -4,6 +4,7 @@
 class bc {
     
     public function getProduct($id) {
+        $id = (int) $id;
         $api_url = 'https://store-bwvr466.mybigcommerce.com/api/v2/products/' . $id . '.json';
         $ch = curl_init(); curl_setopt( $ch, CURLOPT_URL, $api_url ); 
         curl_setopt( $ch, CURLOPT_HTTPHEADER, array ('Accept: application/json', 'Content-Length: 0') );                                   
