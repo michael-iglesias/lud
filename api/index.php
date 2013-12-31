@@ -599,12 +599,11 @@ $app->post('/cart', function() {
     $cart = json_decode($body);
     $db = getConnection();
     
-    
     $id = $db->real_escape_string($cart->id);
     $type = $db->real_escape_string($cart->type);
 
     if($type == 'personal') {
-        $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND order_status=NULL";
+        $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND order_processed='no'";
     } else {
         $sql1 = "SELECT tun_id FROM Leasing WHERE tnt_id=$id";
         $q1 = $db->query($sql1);
@@ -612,11 +611,10 @@ $app->post('/cart', function() {
             while($row = $q->fetch_array(MYSQLI_ASSOC)) {
                 $id = $row['tun_id'];
             }
-            $sql = "SELECT * FROM ShoppingCart WHERE tun_id=$id AND order_status=NULL";
+            $sql = "SELECT * FROM ShoppingCart WHERE tun_id=$id AND order_processed='no'";
         }
     }
-    $q1->free();
-
+    
     $q = $db->query($sql);
     if($q->num_rows > 0) {
         while($row = $q->fetch_array(MYSQLI_ASSOC)) {
@@ -624,11 +622,11 @@ $app->post('/cart', function() {
         }
         // Format Response
         $data['status'] = 'success';
-        $data['login_match'] = $q->num_rows;
+        $data['cart_items'] = $q->num_rows;
         $data['data'] = $rows;
     } else {
         $data['status'] = 'success';
-        $data['login_match'] = $q->num_rows;
+        $data['cart_items'] = $q->num_rows;
         $data['data'] = NULL;
     }
     // Free result and close connection
