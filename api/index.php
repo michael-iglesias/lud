@@ -196,8 +196,10 @@ $app->get('/maintenance/history/:id', function($id) {
 
 /**
  * Neighbor Notifications ROUTES
- * 1. POST -> /neighbor_notification
- * 2. GET -> /neighbor_notification
+ * 1. POST -> /guest_passes
+ * 2. GET -> /guest_passes/:id
+ * 3. GET -> /guest_passes/:tntid/:passid
+ * 4. DELETE -> /guest_passes/:tntid/:passid
  */
 // POST: guest_passes - Create Guest Pass
 $app->post('/guest_passes', function() {
@@ -559,14 +561,16 @@ $app->post('/cart/add', function() {
     $prod_sku = $db->real_escape_string($prod->sku);
     $prod_price = $db->real_escape_string($prod->price);
     $prod_cart = $db->real_escape_string($prod->cart); 
+    $prod_pro = 'no'; 
     /*$tnt_id = 1;
     $tun_id = 1;
     $prod_id = 620;
     $prod_name = 'asdflkj';
     $prod_sku = 'MB55';
     $prod_cart = 'personal';
-    $prod_price = 123.5000;
-    $prod_pro = 'no'; */
+    $prod_price = 123.5000; */
+    
+    
     
     if($prod_cart == 'personal') {
         $tun_id = NULL;
@@ -604,16 +608,9 @@ $app->post('/cart', function() {
       $type = $db->real_escape_string($cart->type);
 
     if($type == 'personal') {
-        $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND order_processed='no'";
+        $sql = "SELECT * FROM ShoppingCart WHERE tnt_id=$id AND prod_cart='personal' AND order_processed='no'";
     } else {
-        $sql1 = "SELECT tun_id FROM Leasing WHERE tnt_id=$id";
-        $q1 = $db->query($sql1);
-        if($q1->num_rows > 0) {
-            while($row = $q->fetch_array(MYSQLI_ASSOC)) {
-                $id = $row['tun_id'];
-            }
-            $sql = "SELECT * FROM ShoppingCart WHERE tun_id=$id AND order_processed='no'";
-        }
+        $sql = "SELECT * FROM ShoppingCart WHERE tun_id=$id AND prod_cart='group' AND order_processed='no'";
     }
     
     $q = $db->query($sql);
@@ -652,6 +649,66 @@ $app->post('/cart', function() {
     echo json_encode($data);
     
 }); // ***END /cart
+
+/**
+ * UNIT MESSAGING ROUTES
+ * 1. POST -> /roommate_chat
+ * 2. GET -> /roommate_chat/:tntID/:tunID
+ */
+
+// POST -> /roommate_chat -> Create roommate message
+$app->post('/roommate_chat', function() {
+    $request = \Slim\Slim::getInstance()->request();
+    $body = $request->getBody();
+    $message = json_decode($body);
+    
+    try {
+        $db = getConnection();
+        
+        $tnt_id = $db->real_escape_string($message->tntID);
+        $tun_id = $db->real_escape_string($message->tunID);
+        $text = $db->real_escape_string($message->messageBody);
+        $time_sent = date("Y-m-d H:i:s");
+        
+        $sql = "INSERT INTO UnitMessage (umess_text, tnt_id, tun_id, umess_date_sent) VALUES (?, ?, ?, ?)";
+
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param('siis', $text, $tnt_id, $tun_id, $time_sent);
+        $stmt->execute();
+        $db->close();
+        // Format Response
+        $data['status'] = 'success';
+
+        echo json_encode($data);
+    } catch (PDOException $e) {
+        echo '{"error"}' . $e->getMessage();
+    }
+});
+
+// GET -> /roommate_chat/:tntID/:tunID -> Get messages for particular unit
+$app->get('/roommate_chat/:tntID/:tunID', function($tnt_id, $tun_id) {
+    $db = getConnection();
+    $tnt_id = $db->real_escape_string($tnt_id);
+    $tun_id = $db->real_escape_string($tun_id);
+    
+    $sql = "SELECT Tenant.tnt_fname, Tenant.tnt_lname, UnitMessage.umess_text, UnitMessage.tnt_id, UnitMessage.tun_id, UnitMessage.umess_date_sent FROM UnitMessage INNER JOIN Tenant ON UnitMessage.tnt_id = Tenant.tnt_id WHERE UnitMessage.tun_id=$tun_id ORDER BY UnitMessage.umess_date_sent DESC LIMIT 15";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $rows[] = $row;
+        }
+        $data['status'] = 'success';
+        $data['messages'] = $q->num_rows;
+        $data['data'] = $rows;
+    } else {
+        $data['status'] = 'failure';
+        $data['messages'] = $q->num_rows;
+        $data['data'] = NULL;
+    }
+    echo json_encode($data);
+    
+});
+
 
 /**
  * Login ROUTES
