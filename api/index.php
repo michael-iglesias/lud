@@ -701,7 +701,7 @@ $app->get('/roommate_chat/:tntID/:tunID', function($tnt_id, $tun_id) {
         $data['messages'] = $q->num_rows;
         $data['data'] = $rows;
     } else {
-        $data['status'] = 'failure';
+        $data['status'] = 'success';
         $data['messages'] = $q->num_rows;
         $data['data'] = NULL;
     }
