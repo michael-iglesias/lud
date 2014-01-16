@@ -29,14 +29,14 @@ function addBuilding() {
     if(formErrors != true) {
         $.ajax({
                 type: "POST",
-                url: 'http://localhost/LetUsDorm/index.php/tenement/add_building',
+                url: '../../tenement/add_building',
                 data: {buildingName: buildingName, buildingFloorCount: buildingFloorCount, buildingUnitsPerFloor: buildingUnitsPerFloor},
                 success: function(data) {
                     $('#building-name').val('');
                     $('#building-floor-count').val(1);
                     $('#building-units-per-floor').val(1);
                     $('#success-placeholder').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Building Added! You can Continue Adding New Buildings.</div>');
-                    window.location.href = 'http://localhost/LetUsDorm/index.php/tenement/manage_building/' + data;
+                    window.location.href = '../../tenement/manage_building/' + data;
 
                     
                 }, 
@@ -61,7 +61,7 @@ function displayUnitTenants(tun_id, tun_number) {
     if(isNaN(tun_id) == false) {
         $.ajax({
             type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/load_unit_tenants',
+            url: '../../tenement/load_unit_tenants',
             data: {tunID: tun_id},
             success: function(data) {
                 $("#unitoccupancies-modal-body").html(data);
@@ -120,7 +120,7 @@ function addEmployee() {
     if(formErrors != true) {
         $.ajax({
             type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/add_employee',
+            url: '../../tenement/add_employee',
             data: {tempFName: tempFName, tempLName: tempLName, tempPhone: tempPhone, tempEmail: tempEmail, tempPosition: tempPosition},
             success: function(data) {
                 if(data == 1) {
@@ -146,7 +146,7 @@ function deleteEmployee(employeeID) {
     if(confirmDelete == true) {
         $.ajax({
             type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/delete_employee',
+            url: '../../tenement/delete_employee',
             data: {employeeID: employeeID},
             success: function(data) {
                 if(data == 1) {
@@ -203,7 +203,7 @@ function addTenant() {
     if(formErrors != true) {
         $.ajax({
             type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/add_tenant',
+            url: '../../tenement/add_tenant',
             data: {tntFName: tntFName, tntLName: tntLName, tntPhone: tntPhone, tntEmail: tntEmail},
             success: function(data) {
                 if(data == 1) {
@@ -231,7 +231,7 @@ function deleteTenant(tenantID) {
     if(confirmDelete == true) {
         $.ajax({
             type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/delete_tenant',
+            url: '../../tenement/delete_tenant',
             data: {tenantID: tenantID},
             success: function(data) {
                 if(data == 1) {
@@ -256,7 +256,7 @@ function delayedRedirect() {
 function loadBuildingForTenantAddition(tow_id, tnt_id) {
         $.ajax({
             type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/manage_building_modal/' + tow_id,
+            url: '../../tenement/manage_building_modal/' + tow_id,
             data: {towID: tow_id, tntID: tnt_id},
             success: function(data) {
                 $('#unitAssignModal div.modal-body').html(data);
@@ -275,7 +275,7 @@ function loadBuildingForTenantAddition(tow_id, tnt_id) {
 function assignTenantToUnit(tnt_id, tun_id, tun_name) {
         $.ajax({
             type: "POST",
-            url: 'http://localhost/LetUsDorm/index.php/tenement/assign_tenant_to_unit/',
+            url: '../../tenement/assign_tenant_to_unit/',
             data: {tntID: tnt_id, tunID: tun_id},
             success: function(data) {
                 $('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
@@ -294,7 +294,7 @@ function assignTenantToUnit(tnt_id, tun_id, tun_name) {
 function loadTenantList(tnt_id) {
     $.ajax({
         type: "POST",
-        url: 'http://localhost/LetUsDorm/index.php/tenement/load_tenant_list/',
+        url: '../../tenement/load_tenant_list/',
         data: {tntID: tnt_id, tunID: tun_id},
         success: function(data) {
             $('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
@@ -313,7 +313,7 @@ function loadTenantList(tnt_id) {
 function getPossibleRoommates(tun_id) {
     $.ajax({
         type: "POST",
-        url: 'http://localhost/LetUsDorm/index.php/tenement/load_possible_roommates/',
+        url: '../../tenement/load_possible_roommates/',
         data: {tunID: tun_id},
         success: function(data) {
             //$('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
@@ -332,7 +332,7 @@ function getPossibleRoommates(tun_id) {
 function insertAnalytics(tun_id) {
     $.ajax({
         type: "POST",
-        url: 'http://localhost/LetUsDorm/index.php/tenement/insert_unit_analytics/',
+        url: '../../tenement/insert_unit_analytics/',
         data: {tunID: tun_id},
         success: function(data) {
             //$('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
@@ -366,7 +366,7 @@ function logPackage() {
     
     $.ajax({
         type: "POST",
-        url: 'http://localhost/LetUsDorm/index.php/tenement/log_package/',
+        url: '../../tenement/log_package/',
         data: {recipient: recipient, deliveryService: deliveryService, deliveryItem: deliveryItem, trackingNumber: trackingNumber, deliveryNotes: deliveryNotes, deliveryVerification: deliveryVerification},
         success: function(status) {
             if(status == 1) {
@@ -392,7 +392,7 @@ function logPackage() {
 function markPackageDelivered(package_id, obj) {
     $.ajax({
         type: "POST",
-        url: 'http://localhost/LetUsDorm/index.php/tenement/package_delivered/',
+        url: '../../tenement/package_delivered/',
         data: {packageID: package_id},
         success: function(status) {
             if(status == 1) {

@@ -25,7 +25,32 @@ Keen.onChartsReady(function() {
         "label-background-color": "#98D19E"
     });
     
-    
+    // Unique Tenant Visits COUNTER
+    var metricImpressionsTodayUnique = new Keen.Metric("impressions", {
+        analysisType: "count_unique",
+        timeframe: "today",
+        targetProperty: "tntID"
+    });
+    // Initialize Number Display For Total Unique Tenant Imppressions For Today
+    var visualImpressionsTodayUnique = new Keen.Number(metricImpressionsTodayUnique, {
+        label: "Unique Tenant Visits",
+        "number-background-color": "#78CC80",
+        "label-background-color": "#98D19E"
+    });
+
+    // Unique Unit Visits COUNTER
+    var metricImpressionsTodayUniqueUnit = new Keen.Metric("impressions", {
+        analysisType: "count_unique",
+        timeframe: "today",
+        targetProperty: "tunID"
+    });
+    // Initialize Number Display For Total Unique Unit Imppressions For Today
+    var visualImpressionsTodayUniqueUnit = new Keen.Number(metricImpressionsTodayUniqueUnit, {
+        label: "Unique Unit Visits",
+        "number-background-color": "#78CC80",
+        "label-background-color": "#98D19E"
+    });
+
     
     // PIECHART
     var metricImpressionsTodayPieChart = new Keen.Metric("impressions", {
@@ -65,6 +90,30 @@ Keen.onChartsReady(function() {
     // Initialize Number Display For Total Impressions Today
     var visualImpressions7days = new Keen.Number(metricImpressions7days, {
         label: "Total Page Impressions",
+        "number-background-color": "#78CC80",
+        "label-background-color": "#98D19E"
+    });
+    // Unit Tenant Visits Last 7 Days
+    var metricImpressions7daysUnique = new Keen.Metric("impressions", {
+        analysisType: "count_unique",
+        timeframe: "last_7_days",
+        targetProperty: "tntID"
+    });
+    // Initialize Number Display For Total Unique Tenant Impressions For Last 7 Days
+    var visualImpressions7daysUnique = new Keen.Number(metricImpressions7daysUnique, {
+        label: "Unique Tenants Visitors",
+        "number-background-color": "#78CC80",
+        "label-background-color": "#98D19E"
+    });
+    // Unit Unit Visitors Last 7 Days
+    var metricImpressions7daysUniqueUnit = new Keen.Metric("impressions", {
+        analysisType: "count_unique",
+        timeframe: "last_7_days",
+        targetProperty: "tunID"
+    });
+    // Initialize Number Display For Total Unique Tenant Impressions For Last 7 Days
+    var visualImpressions7daysUniqueUnit = new Keen.Number(metricImpressions7daysUniqueUnit, {
+        label: "Unique Unit Visitors",
         "number-background-color": "#78CC80",
         "label-background-color": "#98D19E"
     });
@@ -141,10 +190,14 @@ Keen.onChartsReady(function() {
 
     // Draw Elements
     visualImpressionsToday.draw(document.getElementById("impression_count_today_analysis"));
+    visualImpressionsTodayUnique.draw(document.getElementById("impression_count_today_unique_analysis"));
+    visualImpressionsTodayUniqueUnit.draw(document.getElementById("impression_count_today_unique_unit_analysis"));
     visualImpressionsTodayPieChart.draw(document.getElementById("impression_count_today_analysis_piechart"));
     visualImpressionsTodayLineChart.draw(document.getElementById("impression_count_today_analysis_linechart"));
 
     visualImpressions7days.draw(document.getElementById("impression_count_7days_analysis"));
+    visualImpressions7daysUnique.draw(document.getElementById("impression_count_7days_analysis_unique"));
+    visualImpressions7daysUniqueUnit.draw(document.getElementById("impression_count_7days_analysis_unique_unit"));
     visualImpressions7daysPieChart.draw(document.getElementById("impression_count_7days_analysis_piechart"));
     visualImpressions7daysLineChart.draw(document.getElementById("impression_count_7days_analysis_linechart"));
     
@@ -161,7 +214,12 @@ Keen.onChartsReady(function() {
         <h2>Today:</h2>
     </div>
     <div class="clearfix"></div>
-    <div class="span4"></div>
+    <div class="span4">
+        <div id="impression_count_today_unique_analysis"></div>
+    </div>
+    <div class="span4">
+        <div id="impression_count_today_unique_unit_analysis"></div>
+    </div>
     <div class="span4">
         <div id="impression_count_today" class="analysis-box">
             <div id="impression_count_today_analysis"></div>
@@ -187,7 +245,12 @@ Keen.onChartsReady(function() {
         <h2>Last 7 Days:</h2>
     </div>
     <div class="clearfix"></div>
-    <div class="span4"></div>
+    <div class="span4">
+        <div id="impression_count_7days_analysis_unique"></div>
+    </div>
+    <div class="span4">
+        <div id="impression_count_7days_analysis_unique_unit"></div>
+    </div>
     <div class="span4">
         <div id="impression_count_7days" class="analysis-box">
             <div id="impression_count_7days_analysis"></div>
