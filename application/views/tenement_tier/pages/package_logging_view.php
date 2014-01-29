@@ -109,7 +109,7 @@ function lookup(inputString) {
     if(inputString.length == 0) {
         $('#suggestions').hide();
     } else {
-        $.post("http://localhost/LetUsDorm/index.php/tenement/packagelog_autocomplete", {queryString: ""+inputString+""}, function(data){
+        $.post("<?= base_url(); ?>index.php/tenement/packagelog_autocomplete", {queryString: ""+inputString+""}, function(data){
             if(data.length > 0) {
                 $('#suggestions').show();
                 $('#autoSuggestionsList table tbody').html(data);

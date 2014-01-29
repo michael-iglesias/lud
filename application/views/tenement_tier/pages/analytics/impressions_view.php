@@ -209,38 +209,53 @@ Keen.onChartsReady(function() {
 </script>
 
 
-<div class="row">
-    <div class="span4">
+<div class="row" id="today">
+    <div class="span4" style="margin-bottom: 0px;">
         <h2>Today:</h2>
     </div>
     <div class="clearfix"></div>
-    <div class="span4">
-        <div id="impression_count_today_unique_analysis"></div>
+    <div class="span3">
+        <a href="#today" onclick="loadNarrowedAnalytics('impressions', 'today', 'summary');">Summary</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+        <a href="#today" onclick="loadNarrowedAnalytics('impressions', 'today', 'building');">By Building</a>
+        <div style="display: none;" id="todayByUnitAnalyticsLink">&nbsp;&nbsp;&middot;&nbsp;&nbsp;<a href="#today" onclick="loadNarrowedAnalytics('impressions', 'today', 'unit');">By Unit</a></div>
     </div>
-    <div class="span4">
-        <div id="impression_count_today_unique_unit_analysis"></div>
-    </div>
-    <div class="span4">
-        <div id="impression_count_today" class="analysis-box">
-            <div id="impression_count_today_analysis"></div>
-        </div>
-    </div>
-    
+    <br /><br />
     <div class="clearfix"></div>
     
-    <div class="span5">
-        <div id="impression_count_today_piechart" class="analysis-box">
-            <div id="impression_count_today_analysis_piechart"></div>
-        </div>
-    </div>
     
-    <div class="span5">
-        <div id="impression_count_today_linchart" class="analysis-box">
-            <div id="impression_count_today_analysis_linechart"></div>
+    <div id="today_analytics">
+        <div class="span4">
+            <div id="impression_count_today_unique_analysis"></div>
+        </div>
+        <div class="span4">
+            <div id="impression_count_today_unique_unit_analysis"></div>
+        </div>
+        <div class="span4">
+            <div id="impression_count_today" class="analysis-box">
+                <div id="impression_count_today_analysis"></div>
+            </div>
+        </div>
+
+        <div class="clearfix"></div>
+        
+        <div id="loadNarrowedAnalyticsToday"></div>
+        
+        <div id="today_analytics_toggle">
+            <div class="span5">
+                <div id="impression_count_today_piechart" class="analysis-box">
+                    <div id="impression_count_today_analysis_piechart"></div>
+                </div>
+            </div>
+
+            <div class="span5">
+                <div id="impression_count_today_linchart" class="analysis-box">
+                    <div id="impression_count_today_analysis_linechart"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<div class="row">
+<div class="row" id="last7days">
     <div class="span4">
         <h2>Last 7 Days:</h2>
     </div>
@@ -272,7 +287,7 @@ Keen.onChartsReady(function() {
     </div>
 </div>
 
-<div class="row">
+<div class="row" id="last5weeks">
     <div class="span4">
         <h2>Last 5 Weeks:</h2>
     </div>

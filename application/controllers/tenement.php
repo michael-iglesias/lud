@@ -589,7 +589,7 @@ class Tenement extends CI_Controller {
     /*****************************************
      * Analytical Methods
      * 1) analytics()
-     * 2) 
+     * 2) load_narrowed_analytics()
      * ***************************************
      */
     public function analytics() {
@@ -610,7 +610,8 @@ class Tenement extends CI_Controller {
         
         $this->load->view('tenement_tier/common/header_view', $data);
         if($type == 'impressions') {
-            $this->load->view('tenement_tier/pages/analytics/impressions_view', $data);
+            $this->load->view('tenement_tier/pages/analytics/impressions_selection_view', $data);
+            //$this->load->view('tenement_tier/pages/analytics/impressions_view', $data);
         } else if($type == 'maintenance') {
             $this->load->view('tenement_tier/pages/analytics/maintenance_view', $data);
         } else if($type == 'guestpasses') {
@@ -619,7 +620,138 @@ class Tenement extends CI_Controller {
         $this->load->view('tenement_tier/common/footer_view');
     } // ***END analytics() Method
     
-    
+    public function load_narrowed_analytics() {
+        $this->_authorize_user();
+        $type = $this->input->post('type');
+        $timeframe = $this->input->post('timeFrame');
+        $scope = $this->input->post('scope');
+        $id = $this->input->post('id');
+        
+        if($timeframe == 'today' || $timeframe == 'last_7_days' || $timeframe == 'last_30_days' || $timeframe == 'last_90_days' || $timeframe == 'this_100_years') {} else { $timeframe = 'today'; }
+        
+        
+        if($scope == 'summary' && $type == 'impressions') {
+            $tower_data = array();
+            $top5TowersByImpressions = NULL;
+            $top5UnitsByImpressions = NULL;
+            // KEEN API CALLS
+            // Find Total Amount of Impressions 
+            $totalImpressions = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000');
+            // Get List of Buildings with Impressions & Top 5 Tenants With Impressions
+            $unitsWithImpressions = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000&target_property=keen.id&group_by=tunID');
+            $buildingsWithImpressions = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000&target_property=keen.id&group_by=towID');
+            
+            // Iterate Through Buildings And Sort By # of impressions DESC
+            if(!empty($buildingsWithImpressions)) {
+                foreach($buildingsWithImpressions as $row) {
+                    $top5TowersByImpressions[] = array(
+                        'towID' => $row->towID,
+                        'impressions' => $row->result
+                    );
+                }
+                $this->keenSort($top5TowersByImpressions, 'impressions');
+                // Iterate Through top 5 Towers
+                $i = 0;
+                foreach($top5TowersByImpressions as $row) {
+                    if($i < 5) {
+                        $top5TowersByImpressionsFiltered[$i]['info'] = $this->tenement_model->getTowerInfo($row['towID']);
+                        $top5TowersByImpressionsFiltered[$i]['impressions'] = $row['impressions'];
+                    }
+                    $i += 1;
+                }
+            } // ***END if($buildingWithImpressions) {}
+            
+            // Iterate Through Users And Sort By # of Impressions DESC
+            if(!empty($unitsWithImpressions)) {
+                foreach($unitsWithImpressions as $row) {
+                    $top5UnitsByImpressions[] = array(
+                        'tunID' => $row->tunID,
+                        'impressions' => $row->result
+                    );
+                }
+                $this->keenSort($top5UnitsByImpressions, 'impressions');
+                // Iterate through top 5 tenants
+                $i = 0;
+                foreach($top5UnitsByImpressions as $row) {
+                    if($i < 5) {
+                        $top5UnitsByImpressionsFiltered[$i]['info'] = $this->tenement_model->getUnitInfo($row['tunID']);
+                        $top5UnitsByImpressionsFiltered[$i]['impressions'] = $row['impressions'];
+                    }
+                    $i += 1;
+                }
+            } // ***END if($top5TenantsWithImpressions) {}
+            
+            $data['analytics_type'] = $type;
+            $data['timeframe'] = $timeframe;
+            $data['total_impressions'] = $totalImpressions;
+            $data['tenement_towers'] = $this->tenement_model->getTenementTowers($this->session_data['tmt_id']);
+            $data['top5UnitsByImpressions'] = $top5UnitsByImpressionsFiltered;
+            $data['top5TowersByImpressions'] = $top5TowersByImpressionsFiltered;
+
+            /************************************************************/
+            // Iterate Through Towers And Count Total Impressions Per Specified time period
+            $i = 0;
+            foreach($data['tenement_towers'] as $tower) {
+                $tower_data[$i]['tow_name'] = $tower['tow_name'];
+                $tower_data[$i]['tow_id'] = $tower['tow_id'];
+                $tower_data[$i]['impressions'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&filters=%5B%7B%22property_name%22%3A%22towID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $tower['tow_id'] . '%22%7D%5D&timeframe=' . $timeframe . '&timezone=-18000');
+                $i += 1;
+            }
+            $data['tower_data'] = $tower_data;
+            /************************************************************/
+            $this->load->view('tenement_tier/pages/analytics/impressions/summary_analytics_view', $data);
+        } else if($scope == 'building' && $type == 'impressions') {
+            $tower_data = array();
+            // KEEN API Calls
+            $totalImpressions = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000');
+
+            $data['analytics_type'] = $type;
+            $data['timeframe'] = $timeframe;
+            $data['total_impressions'] = $totalImpressions;
+            $data['tenement_towers'] = $this->tenement_model->getTenementTowers($this->session_data['tmt_id']);
+
+            $i = 0;
+            foreach($data['tenement_towers'] as $tower) {
+                $tower_data[$i]['tow_name'] = $tower['tow_name'];
+                $tower_data[$i]['tow_id'] = $tower['tow_id'];
+                $tower_data[$i]['impressions'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&filters=%5B%7B%22property_name%22%3A%22towID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $tower['tow_id'] . '%22%7D%5D&timeframe=' . $timeframe . '&timezone=-18000');
+                $i += 1;
+            }
+            $data['tower_data'] = $tower_data;
+            $this->load->view('tenement_tier/pages/analytics/narrowed/impressions/building_impressions_view', $data);
+        } else if($scope == 'unit' && $type == 'impressions') {
+            $tower_unit_analytics = array();
+            $data['analytics_type'] = $type;
+            $data['timeframe'] = $timeframe;
+            $data['total_impressions'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000');
+            $data['building_total_impressions'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&filters=%5B%7B%22property_name%22%3A%22towID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $id . '%22%7D%5D&timeframe=' . $timeframe . '&timezone=-18000&target_property=towID');
+            $data['tower_info'] = $this->tenement_model->getTowerInfo($id);
+            $data['tower_units'] = $this->tenement_model->getTowerUnits($id);
+            
+            $i = 0;
+            foreach($data['tower_units'] as $tu) {
+                $i = $tu['tun_id'];
+                $tower_unit_analytics[$i]['tun_id'] = $tu['tun_id'];
+                $tower_unit_analytics[$i]['tun_number'] = $tu['tun_number'];
+                $tower_unit_analytics[$i]['tun_floor'] = $tu['tun_floor'];
+                $tower_unit_analytics[$i]['unit_total_impressions'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&filters=%5B%7B%22property_name%22%3A%22towID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $id . '%22%7D%2C%7B%22property_name%22%3A%22tunID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $tu['tun_id'] . '%22%7D%5D&timeframe=' . $timeframe . '&timezone=-18000&target_property=tunID');
+                $tower_unit_analytics[$i]['unit_total_unique_tenant_visitors'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count_unique?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&filters=%5B%7B%22property_name%22%3A%22towID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $id . '%22%7D%2C%7B%22property_name%22%3A%22tunID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $tu['tun_id'] . '%22%7D%5D&timeframe=' . $timeframe . '&timezone=-18000&target_property=tntID');
+                
+                $i += 1;
+            }
+            $data['tower_unit_analytics'] = $tower_unit_analytics;
+            
+            
+            $this->load->view('tenement_tier/pages/analytics/narrowed/impressions/unit_impressions_view', $data);
+        } else if($scope == 'unit_tenants' && $type == 'impressions') {
+            $unit_tenants_analytics = array();
+            $data['analytics_type'] = $type;
+            $data['timeframe'] = $timeframe;
+            $data['total_impressions'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000');
+            $data['unit_total_impressions'] = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&filters=%5B%7B%22property_name%22%3A%22towID%22%2C%22operator%22%3A%22eq%22%2C%22property_value%22%3A%22' . $id . '%22%7D%5D&timeframe=' . $timeframe . '&timezone=-18000&target_property=tunID');
+        }
+
+    } // ***END load_narrowed_analytics() Method
     
     /*****************************************
      * Login Method
@@ -698,4 +830,34 @@ class Tenement extends CI_Controller {
         
     }
     
+    public function executeKeenCall($url) {
+        $api_url = $url;
+        $ch = curl_init(); curl_setopt( $ch, CURLOPT_URL, $api_url ); 
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, array ('Accept: application/json', 'Content-Length: 0') );                                   
+        curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'GET'); 
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, '30');
+        
+        $response = curl_exec( $ch );   
+        $result = json_decode($response); 
+
+        return $result->result;
+    } // ***END executeKeenCall()
+
+    public function keenSort(&$array, $key) {
+        $sorter=array();
+        $ret=array();
+        reset($array);
+        foreach ($array as $ii => $va) {
+            $sorter[$ii]=$va[$key];
+        }
+        arsort($sorter);
+        foreach ($sorter as $ii => $va) {
+            $ret[$ii]=$array[$ii];
+        }
+        $array=$ret;
+    }
+    
+    
 }
+

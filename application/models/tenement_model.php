@@ -46,7 +46,7 @@ class Tenement_model extends CI_Model {
      * 5) getUnitTenants()
      ************************************************************************/
     public function getUnitInfo($tun_id) {
-        $sql = 'SELECT * FROM TowerUnit JOIN TenementTower WHERE TowerUnit.tun_id=?';
+        $sql = 'SELECT * FROM TowerUnit JOIN TenementTower ON TowerUnit.tow_id = TenementTower.tow_id WHERE TowerUnit.tun_id=?';
         $q = $this->db->query($sql, $tun_id);
         foreach($q->result_array() as $row) {
             $data[] = $row;

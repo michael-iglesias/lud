@@ -256,7 +256,7 @@ function delayedRedirect() {
 function loadBuildingForTenantAddition(tow_id, tnt_id) {
         $.ajax({
             type: "POST",
-            url: '../../index.php/tenement/manage_building_modal/' + tow_id,
+            url: '../../tenement/manage_building_modal/' + tow_id,
             data: {towID: tow_id, tntID: tnt_id},
             success: function(data) {
                 $('#unitAssignModal div.modal-body').html(data);
@@ -275,7 +275,7 @@ function loadBuildingForTenantAddition(tow_id, tnt_id) {
 function assignTenantToUnit(tnt_id, tun_id, tun_name) {
         $.ajax({
             type: "POST",
-            url: '../../index.php/tenement/assign_tenant_to_unit/',
+            url: '../../tenement/assign_tenant_to_unit/',
             data: {tntID: tnt_id, tunID: tun_id},
             success: function(data) {
                 $('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');
@@ -412,3 +412,38 @@ function markPackageDelivered(package_id, obj) {
     }); // ***END $.ajax call
 } // ***END markPackageDelivered()
 
+function loadNarrowedAnalytics(type, timeframe, scope, id) {
+    id = id || null;
+    
+    if(scope == 'building') {
+        $('#breakdown-by-buildings').html('<center><h2 style="margin-bottom: 0px; padding-bottom: 1px;">Loading</h2><span class="loading dark" data-original-title="Loading, please wait…">Loading…</span></center>');
+    } else if(scope == 'unit') {
+        $('#breakdown-by-buildings').html('<center><h2 style="margin-bottom: 0px; padding-bottom: 1px;">Loading</h2><span class="loading dark" data-original-title="Loading, please wait…">Loading…</span></center>');
+    } else {
+        $('#selection-menu').hide();
+        $('#analytics-insert-here').html('<center><h2 style="margin-bottom: 0px; padding-bottom: 1px;">Loading</h2><span class="loading dark" data-original-title="Loading, please wait…">Loading…</span></center>');
+    }
+    $.ajax({
+        type: "POST",
+        url: '../../tenement/load_narrowed_analytics/',
+        data: {type: type, timeFrame: timeframe, scope: scope, id: id},
+        success: function(data) {
+            if(data != 0) {
+                if(scope == 'building') {
+                    $('#breakdown-by-buildings').html(data);
+                } else if(scope == 'unit') {
+                    $('#breakdown-by-buildings').html(data);
+                } else {
+                    $('#analytics-insert-here').html(data);
+                }
+                $('#selection-menu').hide();
+            }
+        }, 
+        error: function() {
+                alert('System Error! Please try again.');
+        },
+        complete: function() {
+                console.log('completed')
+        }
+    }); // ***END $.ajax call    
+} // ***END loadNarrowedAnalytics(type, timeframe, scope)
