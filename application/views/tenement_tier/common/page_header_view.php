@@ -118,7 +118,7 @@
                                                                     </a>
                                                                 </li>
                                                                 <li>
-                                                                    <a href="<?= base_url(); ?>index.php/tenement/roommate_matching">
+                                                                    <a href="<?= base_url(); ?>index.php/roommate_matching">
                                                                             <span class="awe-group"></span>
                                                                             Roommate Matching
                                                                     </a>

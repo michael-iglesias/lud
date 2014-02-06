@@ -104,6 +104,13 @@ $app->post('/maintenance', function() {
     $tnt_id = $db->real_escape_string($ticket->tnt_id);
     $title = $db->real_escape_string($ticket->title);
     $description = $db->real_escape_string($ticket->description);
+    $permissionToEnter = $db->real_escape_string($ticket->permissionToEnter);
+    $pets = $db->real_escape_string($ticket->pets);
+    $alarm = $db->real_escape_string($ticket->alarm);
+    if($permissionToEnter != 'yes' || $permissionToEnter != 'no') {$permissionToEnter = 'no';}
+    if($pets != 'yes' || $pets != 'no') {$pets = 'no';}
+    if($alarm != 'yes' || $alarm != 'no') {$alarm = 'no';}
+    
     $today = date("Y-m-d H:i:s");
     $status = 'open';
     
@@ -113,10 +120,10 @@ $app->post('/maintenance', function() {
         while($row = $q->fetch_array(MYSQLI_ASSOC)) {
             $tun_id = $row['tun_id'];
         }
-        $sql = "INSERT INTO MaintenanceTicket (tnt_id, tun_id, mticket_status, mticket_title, mticket_description, mticket_open_date) VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO MaintenanceTicket (tnt_id, tun_id, mticket_status, mticket_title, mticket_description, mticket_permission_to_enter, mticket_pets, mticket_alarm, mticket_open_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try {
             $stmt = $db->prepare($sql);
-            $stmt->bind_param('iissss', $tnt_id, $tun_id, $status, $title, $description, $today);
+            $stmt->bind_param('iisssssss', $tnt_id, $tun_id, $status, $title, $description, $permissionToEnter, $pets, $alarm, $today);
             $stmt->execute();
             $db->close();
         } catch (Exception $e) {
@@ -388,7 +395,6 @@ $app->delete('/guest_passes/:tntid/:passid', function($tnt_id, $pass_id) {
     }
     echo json_encode($data);
 });
-
 
 
 /**

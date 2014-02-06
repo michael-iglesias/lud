@@ -13129,3 +13129,6 @@ div.jGrowl div.inverse a:hover {
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
 }
+.roommate-matching-select-filter {
+    border: 2px solid #afafaf;
+}
