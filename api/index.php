@@ -22,16 +22,51 @@ $app = new \Slim\Slim();
 
 /**
  * PACKAGE ROUTES
- *
- * 1. /packages/:id
- * 2. /packages/history/:id
+ * 1. /user/dashboard/:id
+ * 2. /packages/:id
+ * 3. /packages/history/:id
  */
+$app->get('/user/dashboard/:id', function ($id) {
+    $db = getConnection();
+    $id = $db->real_escape_string($id);
+    
+    $sql = "SELECT Tenant.tnt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_phone, Tenant.tnt_email, Tenant.tnt_avatar, Leasing.lease_id, Leasing.tun_id, Leasing.urm_id, UnitRoom.urm_id, UnitRoom.urm_room_number, TowerUnit.tun_number, TenementTower.tow_name, (SELECT COUNT(*) FROM GuestPass WHERE tnt_id=Tenant.tnt_id) AS `Guest_Passes`, (SELECT COUNT(*) FROM MaintenanceTicket WHERE tun_id=Leasing.tun_id AND (mticket_status='open' OR mticket_status='processing')) as `Maintenance_Tickets`, (SELECT COUNT(*) FROM PackageDelivered WHERE tnt_id=Leasing.tnt_id AND (pack_pickedup='no')) AS `Pending_Packages` FROM Tenant LEFT JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id Left JOIN UnitRoom ON Leasing.urm_id = UnitRoom.urm_id LEFT JOIN TowerUnit ON UnitRoom.tun_id = TowerUnit.tun_id LEFT JOIN TenementTower ON TowerUnit.tow_id = TenementTower.tow_id WHERE Tenant.tnt_id=$id";
+    try {
+        $q = $db->query($sql);
+        if($q->num_rows > 0) {
+            while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+                $rows[] = $row;
+            }
+            // Format Response
+            $data['status'] = 'success';
+            $data['user_dashboard_info'] = $q->num_rows;
+            $data['data'] = $rows;
+
+        } else {
+            // Format Response
+            $data['status'] = 'success';
+            $data['user_dashboard_info'] = $q->num_rows;
+            $data['data'] = NULL;
+        }
+        // Free result and close connection
+        $q->free();
+        $db->close();
+
+        echo json_encode($data);
+    } catch (PDOException $e) {
+        echo '{"error"}' . $e->getMessage();
+    }
+});
+
+
 
 // GET: /packages -> Get Packages for particular tenant
 $app->get('/packages/:id', function ($id) {
+    $db = getConnection();
+    $id = $db->real_escape_string($id);
+    
     $sql = "SELECT * FROM PackageDelivered WHERE pack_pickedup='no' AND tnt_id=$id";
     try {
-        $db = getConnection();
         $q = $db->query($sql);
         if($q->num_rows > 0) {
             while($row = $q->fetch_array(MYSQLI_ASSOC)) {
@@ -107,9 +142,9 @@ $app->post('/maintenance', function() {
     $permissionToEnter = $db->real_escape_string($ticket->permissionToEnter);
     $pets = $db->real_escape_string($ticket->pets);
     $alarm = $db->real_escape_string($ticket->alarm);
-    if($permissionToEnter != 'yes' || $permissionToEnter != 'no') {$permissionToEnter = 'no';}
-    if($pets != 'yes' || $pets != 'no') {$pets = 'no';}
-    if($alarm != 'yes' || $alarm != 'no') {$alarm = 'no';}
+    if($permissionToEnter != 'yes' && $permissionToEnter != 'no') {$permissionToEnter = 'no';}
+    if($pets != 'yes' && $pets != 'no') {$pets = 'no';}
+    if($alarm != 'yes' && $alarm != 'no') {$alarm = 'no';}
     
     $today = date("Y-m-d H:i:s");
     $status = 'open';
