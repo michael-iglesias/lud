@@ -751,6 +751,56 @@ $app->get('/roommate_chat/:tntID/:tunID', function($tnt_id, $tun_id) {
 });
 
 
+
+
+
+// ******************************************************************
+// Community Feed 
+// ******************************************************************
+$app->get('/community_feed2/:tmtID', function($tmt_id) {
+    $db = getConnection();
+    $tmt_id = $db->real_escape_string($tmt_id);
+    
+    $sql = "SELECT * FROM TenementNews WHERE tmt_id=$tmt_id AND ( tmtnews_date <= (NOW() + INTERVAL 10 DAY) ) ORDER BY tmtnews_id DESC LIMIT 2";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $rows[] = $row;
+        }
+        $data['status'] = 'success';
+        $data['news_feed_entries'] = $q->num_rows;
+        $data['data'] = $rows;
+    } else {
+        $data['status'] = 'success';
+        $data['news_feed_entries'] = $q->num_rows;
+        $data['data'] = NULL;
+    }
+    echo json_encode($data);
+});
+
+$app->get('/community_feed/:tmtID', function($tmt_id) {
+    $db = getConnection();
+    $tmt_id = $db->real_escape_string($tmt_id);
+    
+    $sql = "SELECT * FROM TenementNews WHERE tmt_id=$tmt_id AND ( tmtnews_date <= (NOW() + INTERVAL 30 DAY) ) ORDER BY tmtnews_id DESC";
+    $q = $db->query($sql);
+    if($q->num_rows > 0) {
+        while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $rows[] = $row;
+        }
+        $data['status'] = 'success';
+        $data['news_feed_entries'] = $q->num_rows;
+        $data['data'] = $rows;
+    } else {
+        $data['status'] = 'success';
+        $data['news_feed_entries'] = $q->num_rows;
+        $data['data'] = NULL;
+    }
+    echo json_encode($data);
+});
+
+
+
 /**
  * Login ROUTES
  * 1. POST -> /login
