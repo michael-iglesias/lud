@@ -90,10 +90,27 @@ class Tenement extends CI_Controller {
         $building_name = $this->input->post('buildingName');
         $building_floor_count = $this->input->post('buildingFloorCount');
         $building_units_per_floor = $this->input->post('buildingUnitsPerFloor');
+        $building_default_bed_count = $this->input->post('buildingDefaultBedCount');
+        $page = $this->input->post('page');
         
-        $result = $this->tenement_model->addTenementTower($building_name, $building_floor_count, $building_units_per_floor);
-        if($result) {
-            echo $result;
+        $result = $this->tenement_model->addTenementTower($building_name, $building_floor_count, $building_units_per_floor, $building_default_bed_count);
+        
+        if($page != 'setup') {
+            if($result) {
+                echo $result;
+            }
+        } else {
+            $tow_id = $result;
+
+            $data['tower_info'] = $this->tenement_model->getTowerInfo($tow_id);
+            $data['tower_units'] = $this->tenement_model->getTowerUnits($tow_id);
+
+            $data['page_title'] = 'Manage Property - Let Us Dorm';
+            $data['page_header_icon'] = 'awe-table';
+            $data['page_header_title'] = 'Bulding: ' . $data['tower_info'][0]['tow_name'];
+            $data['session_data'] = $this->session_data;
+            
+            $this->load->view('tenement_tier/pages/setup/step3/manage_building_view', $data);
         }
     } // ***END add_building() Method
     
@@ -629,7 +646,7 @@ class Tenement extends CI_Controller {
         
         if($timeframe == 'today' || $timeframe == 'last_7_days' || $timeframe == 'last_30_days' || $timeframe == 'last_90_days' || $timeframe == 'this_100_years') {} else { $timeframe = 'today'; }
         
-        
+        //$scope = 'summary'; $type = 'impressions';
         if($scope == 'summary' && $type == 'impressions') {
             $tower_data = array();
             $top5TowersByImpressions = NULL;
@@ -640,6 +657,8 @@ class Tenement extends CI_Controller {
             // Get List of Buildings with Impressions & Top 5 Tenants With Impressions
             $unitsWithImpressions = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000&target_property=keen.id&group_by=tunID');
             $buildingsWithImpressions = $this->executeKeenCall('https://api.keen.io/3.0/projects/52b3bce536bf5a240d000000/queries/count?api_key=3e3e7eda803caf9bc67d3f37bd770b94b9171cf1ddff40851bd89714dcc01c385377b2825df60a2856e1ed616b302eb0dd5ea534d70b5f36b80cac0f0f2759682e660bc470aa58a55e47c884cb0948692547a4eed83ea322c747c38a6eea054f7e5a4e89f84d21235a4efb73c92fbd78&event_collection=impressions&timeframe=' . $timeframe . '&timezone=-18000&target_property=keen.id&group_by=towID');
+            
+            
             
             // Iterate Through Buildings And Sort By # of impressions DESC
             if(!empty($buildingsWithImpressions)) {
@@ -654,12 +673,13 @@ class Tenement extends CI_Controller {
                 $i = 0;
                 foreach($top5TowersByImpressions as $row) {
                     if($i < 5) {
+                        
                         $top5TowersByImpressionsFiltered[$i]['info'] = $this->tenement_model->getTowerInfo($row['towID']);
                         $top5TowersByImpressionsFiltered[$i]['impressions'] = $row['impressions'];
                     }
                     $i += 1;
                 }
-            } // ***END if($buildingWithImpressions) {}
+            } // ***END if($buildingWithImpressions) {}          
             
             // Iterate Through Users And Sort By # of Impressions DESC
             if(!empty($unitsWithImpressions)) {

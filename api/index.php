@@ -818,7 +818,7 @@ $app->post('/login', function() {
         $pass = $db->real_escape_string($login->login_password);
         $pass = hash('sha256', $pass);
         
-        $sql = "SELECT Tenant.tnt_id, Tenant.tmt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_email, Tenant.tnt_avatar, Tenant.tnt_profile_complete, Leasing.tun_id, Leasing.urm_id, TowerUnit.tow_id FROM Tenant LEFT JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id LEFT JOIN TowerUnit ON Leasing.tun_id = TowerUnit.tun_id WHERE Tenant.tnt_email='$email' AND Tenant.tnt_password='$pass'";
+        $sql = "SELECT Tenant.tnt_id, Tenant.tmt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_email, Tenant.tnt_avatar, Tenant.tnt_profile_complete, Leasing.tun_id, Leasing.urm_id, TowerUnit.tow_id, TowerUnit.tun_number, TenementTower.tow_name FROM Tenant LEFT JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id LEFT JOIN TowerUnit ON Leasing.tun_id = TowerUnit.tun_id LEFT JOIN TenementTower ON TowerUnit.tow_id = TenementTower.tow_id WHERE Tenant.tnt_email='$email' AND Tenant.tnt_password='$pass'";
         $q = $db->query($sql);
         if($q->num_rows > 0) {
             while($row = $q->fetch_array(MYSQLI_ASSOC)) {

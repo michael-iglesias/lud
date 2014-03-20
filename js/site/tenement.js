@@ -1,9 +1,12 @@
 // Function: addBuilding()
 // Description: Allows tenement administrators to add new buildings to their property
-function addBuilding() {
+function addBuilding(page) {
     var buildingName = $('#building-name').val();
     var buildingFloorCount = $('#building-floor-count').val();
     var buildingUnitsPerFloor = $('#building-units-per-floor').val();
+    var buildingDefaultBedCount = $('#building-default-bed-count').val();
+    
+    
     var formErrors = false;
     // Perform form validation
     if(buildingName == '') {
@@ -12,32 +15,43 @@ function addBuilding() {
     } else {
         $('#building-name').css('border', '1px solid #CCCCCC');
     }
-    if(isNaN(buildingFloorCount)) {
+    if(isNaN(buildingFloorCount) || buildingFloorCount == '') {
         $('#building-floor-count').css('border', '1px solid red');
         formErrors = true;
     } else {
         $('#building-floor-count').css('border', '1px solid #CCCCCC');
     }
-    if(isNaN(buildingUnitsPerFloor)) {
+    if(isNaN(buildingUnitsPerFloor) || buildingUnitsPerFloor == '') {
         $('#building-units-per-floor').css('border', '1px solid red');
         formErrors = true;
     } else {
         $('#building-units-per-floor').css('border', '1px solid #CCCCCC');
-    }    
+    }
+    if(isNaN(buildingDefaultBedCount) || buildingDefaultBedCount == '') {
+        $('#building-default-bed-count').css('border', '1px solid red');
+        formErrors = true;
+    } else {
+        $('#building-default-bed-count').css('border', '1px solid #CCCCCC');
+    }
     
     
     if(formErrors != true) {
         $.ajax({
                 type: "POST",
                 url: '../../index.php/tenement/add_building',
-                data: {buildingName: buildingName, buildingFloorCount: buildingFloorCount, buildingUnitsPerFloor: buildingUnitsPerFloor},
+                data: {page: page, buildingName: buildingName, buildingFloorCount: buildingFloorCount, buildingUnitsPerFloor: buildingUnitsPerFloor, buildingDefaultBedCount: buildingDefaultBedCount},
                 success: function(data) {
-                    $('#building-name').val('');
-                    $('#building-floor-count').val(1);
-                    $('#building-units-per-floor').val(1);
-                    $('#success-placeholder').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Building Added! You can Continue Adding New Buildings.</div>');
-                    window.location.href = '../../index.php/tenement/manage_building/' + data;
-
+                    if(page != 'setup') {
+                        
+                        
+                        $('#building-name').val('');
+                        $('#building-floor-count').val(1);
+                        $('#building-units-per-floor').val(1);
+                        $('#success-placeholder').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Building Added! You can Continue Adding New Buildings.</div>');
+                        window.location.href = '../../index.php/tenement/manage_building/' + data;
+                    } else {
+                        $('#inserted-building-placeholder').html(data);
+                    }
                     
                 }, 
                 error: function() {
@@ -313,7 +327,7 @@ function loadTenantList(tnt_id) {
 function getPossibleRoommates(tun_id) {
     $.ajax({
         type: "POST",
-        url: '../../index.php/tenement/load_possible_roommates/',
+        url: '../../tenement/load_possible_roommates/',
         data: {tunID: tun_id},
         success: function(data) {
             //$('#unitAssignModal div.modal-body').html('<div class="alert alert-success"><button type="button" data-dismiss="alert" class="close">×</button><strong>Tenant Assigned To Unit!</strong> </div>');

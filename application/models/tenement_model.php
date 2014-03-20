@@ -262,17 +262,17 @@ class Tenement_model extends CI_Model {
         }
     } // ***END deleteEmployee($temp_id) Method
     
-    public function addTenementTower($building_name, $building_floor_count, $building_units_per_floor) {
+    public function addTenementTower($building_name, $building_floor_count, $building_units_per_floor, $building_default_bed_count) {
         $tmt_id = $this->session->userdata('tmt_id');
         $sql = 'INSERT INTO TenementTower (tmt_id, tow_name, tow_floor_count, tow_units_per_floor) VALUES (?, ?, ?, ?)';
         $q = $this->db->query($sql, array($tmt_id, $building_name, $building_floor_count, $building_units_per_floor));
         if($tow_id = $this->db->insert_id()) {
-            $this->_addTowerUnits($tmt_id, $tow_id, $building_name, $building_floor_count, $building_units_per_floor);
+            $this->_addTowerUnits($tmt_id, $tow_id, $building_name, $building_floor_count, $building_units_per_floor, $building_default_bed_count);
             return $tow_id;
         }
     } // ***END addTenementTower() Method
     
-    private function _addTowerUnits($tmt_id, $tow_id, $building_name, $building_floor_count, $building_units_per_floor) {
+    private function _addTowerUnits($tmt_id, $tow_id, $building_name, $building_floor_count, $building_units_per_floor, $building_default_bed_count) {
         // Check to see if Building Name is Numeric
         if(is_numeric($building_name)) {
             // Building Name is Numeric
@@ -282,15 +282,15 @@ class Tenement_model extends CI_Model {
                 for($u = 1; $u <= $building_units_per_floor; $u++) {
                     // Set Unit # & default properties
                     $tun_number = "$building_name" . "$i" . "$u";
-                    $tun_capacity = 4; $tun_room_count = 4; $tun_floor = $i;
+                    $tun_capacity = 4; $tun_floor = $i;
                     $otokSession = $this->_openTokGenerateSession();
                     // Generate and Execute Insert Query
                     $sql = 'INSERT INTO TowerUnit (tow_id, tun_number, tun_capacity, tun_room_count, tun_floor, tun_opentok_session) VALUES (?, ?, ?, ?, ?, ?)';
-                    $q = $this->db->query($sql, array($tow_id, $tun_number, $tun_capacity, $tun_room_count, $tun_floor, $otokSession));
+                    $q = $this->db->query($sql, array($tow_id, $tun_number, $building_default_bed_count, $building_default_bed_count, $tun_floor, $otokSession));
                     // Store Recently Created Tower Unit ID
                     $current_unit_id = $this->db->insert_id();
                     // Create Default # of individual rooms inside the recently created Unit
-                    for($r = 1; $r <= $tun_room_count; $r++) {
+                    for($r = 1; $r <= $building_default_bed_count; $r++) {
                         $sql = 'INSERT INTO UnitRoom (tun_id, urm_room_number, urm_master) VALUES (?, ?, ?)';
                         $q = $this->db->query($sql, array($current_unit_id, $r, 'no'));
                     }
