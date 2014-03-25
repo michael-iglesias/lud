@@ -30,7 +30,7 @@ $app->get('/user/dashboard/:id', function ($id) {
     $db = getConnection();
     $id = $db->real_escape_string($id);
     
-    $sql = "SELECT Tenant.tnt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_phone, Tenant.tnt_email, Tenant.tnt_avatar, Leasing.lease_id, Leasing.tun_id, Leasing.urm_id, UnitRoom.urm_id, UnitRoom.urm_room_number, TowerUnit.tun_number, TenementTower.tow_name, (SELECT COUNT(*) FROM GuestPass WHERE tnt_id=Tenant.tnt_id) AS `Guest_Passes`, (SELECT COUNT(*) FROM MaintenanceTicket WHERE tun_id=Leasing.tun_id AND (mticket_status='open' OR mticket_status='processing')) as `Maintenance_Tickets`, (SELECT COUNT(*) FROM PackageDelivered WHERE tnt_id=Leasing.tnt_id AND (pack_pickedup='no')) AS `Pending_Packages` FROM Tenant LEFT JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id Left JOIN UnitRoom ON Leasing.urm_id = UnitRoom.urm_id LEFT JOIN TowerUnit ON UnitRoom.tun_id = TowerUnit.tun_id LEFT JOIN TenementTower ON TowerUnit.tow_id = TenementTower.tow_id WHERE Tenant.tnt_id=$id";
+    $sql = "SELECT Tenant.tnt_id, Tenant.tnt_fname, Tenant.tnt_lname, Tenant.tnt_phone, Tenant.tnt_email, Tenant.tnt_avatar, Leasing.lease_id, Leasing.tun_id, Leasing.urm_id, UnitRoom.urm_id, UnitRoom.urm_room_number, TowerUnit.tun_number, TenementTower.tow_name, (SELECT COUNT(*) FROM GuestPass WHERE tun_id=Leasing.tun_id) AS `Guest_Passes`, (SELECT COUNT(*) FROM MaintenanceTicket WHERE tun_id=Leasing.tun_id AND (mticket_status='open' OR mticket_status='processing')) as `Maintenance_Tickets`, (SELECT COUNT(*) FROM PackageDelivered WHERE tnt_id=Leasing.tnt_id AND (pack_pickedup='no')) AS `Pending_Packages` FROM Tenant LEFT JOIN Leasing ON Tenant.tnt_id = Leasing.tnt_id Left JOIN UnitRoom ON Leasing.urm_id = UnitRoom.urm_id LEFT JOIN TowerUnit ON UnitRoom.tun_id = TowerUnit.tun_id LEFT JOIN TenementTower ON TowerUnit.tow_id = TenementTower.tow_id WHERE Tenant.tnt_id=$id";
     try {
         $q = $db->query($sql);
         if($q->num_rows > 0) {
@@ -298,26 +298,23 @@ $app->get('/guest_passes/:id', function($id) {
             $tun_id = $row['tun_id'];
         }
     
-        $sql = "SELECT * FROM GuestPass WHERE tun_id=$tun_id";
+        $sql = "SELECT * FROM GuestPass WHERE tun_id=$tun_id AND pass_redeemed='no'";
         try {
-            $i = 0; $rows = NULL;
-            $db = getConnection();
-            $q = $db->query($sql);
-            if($q->num_rows > 0) {
-                while($row = $q->fetch_array(MYSQLI_ASSOC)) {
+            $i = 0; $rows = array();
+            $qq = $db->query($sql);
+            if($qq->num_rows > 0) {
+                while($row = $qq->fetch_array(MYSQLI_ASSOC)) {
                     $current_date = date("m-d-Y");
                     $date = date( "m-d-Y", strtotime($row['pass_date']) );
-                    if($current_date == $date) {
-                        $label = '';
-                        if($row['pass_type'] == 'guestpass') {
-                            $label = 'Guest: ' . ucfirst($row['pass_fname']) . ' - ' . $date;
-                        } else if($row['pass_type'] == 'food') {
-                            $label = 'Food Delivery: ' . $date;
-                        }
-                        $rows[$i] = $row;
-                        $rows[$i]['label_title'] = $label;
-                        $i += 1;
-                    }                    
+                    $label = '';
+                    if($row['pass_type'] == 'guestpass') {
+                        $label = 'Guest: ' . ucfirst($row['pass_fname']) . ' - ' . $date;
+                    } else if($row['pass_type'] == 'food') {
+                        $label = 'Food Delivery: ' . $date;
+                    }
+                    $rows[$i] = $row;
+                    $rows[$i]['label_title'] = $label;
+                    $i += 1;                  
                 }
                 // Format Response
                 $data['status'] = 'success';

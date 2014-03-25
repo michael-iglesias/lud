@@ -28,14 +28,15 @@ class Community_feed extends CI_Controller {
         $validated = TRUE;
         
         $entry_date = $this->input->post('entryDate');
-        if(strlen($entry_date) != 10) { $entry_date = NULL; }
-
-        $date_array = explode("/",$entry_date); // split the array
-        $var_day = $date_array[0]; //day seqment
-        $var_month = $date_array[1]; //month segment
-        $var_year = $date_array[2]; //year segment
-        $entry_date = date("Y-m-d H:i:s", strtotime($entry_date));
-        
+        if(strlen($entry_date) != 10) { 
+            $entry_date = '';
+        } else {
+            $date_array = explode("/",$entry_date); // split the array
+            $var_day = $date_array[0]; //day seqment
+            $var_month = $date_array[1]; //month segment
+            $var_year = $date_array[2]; //year segment
+            $entry_date = date("Y-m-d H:i:s", strtotime($entry_date));
+        }
         
         $sTimeSelected = $this->input->post('sTimeSelected');
         if($sTimeSelected == 'yes') {

@@ -52,11 +52,17 @@
                         <input type="text" value="1" class="input-xlarge num-spinner-input" id="building-units-per-floor">
                 </div>
             </div>
+            <div class="control-group">
+                <label for="input" class="control-label">Default # of Beds Per Unit (NOTE: You can later edit the number of beds for individual units.)</label>
+                <div class="controls">
+                        <input type="text" class="input-xlarge" maxlength="4" id="building-default-bed-count">
+                </div>
+            </div>
         </fieldset>
     </div>
     <div class="modal-footer">
             <a data-dismiss="modal" class="btn btn-wuxia" href="#">Close</a>
-            <a class="btn btn-wuxia btn-primary" href="#" onclick="addBuilding();">Add Building</a>
+            <a class="btn btn-wuxia btn-primary" href="#" onclick="addBuilding('default');">Add Building</a>
     </div>
 </div>
 <script type="text/javascript" src="http://http://jqueryui.com/resources/demos/external/jquery.mousewheel.js"></script>

@@ -15,19 +15,19 @@ function addBuilding(page) {
     } else {
         $('#building-name').css('border', '1px solid #CCCCCC');
     }
-    if(isNaN(buildingFloorCount) || buildingFloorCount == '') {
+    if(buildingFloorCount == '') {
         $('#building-floor-count').css('border', '1px solid red');
         formErrors = true;
     } else {
         $('#building-floor-count').css('border', '1px solid #CCCCCC');
     }
-    if(isNaN(buildingUnitsPerFloor) || buildingUnitsPerFloor == '') {
+    if(buildingUnitsPerFloor == '') {
         $('#building-units-per-floor').css('border', '1px solid red');
         formErrors = true;
     } else {
         $('#building-units-per-floor').css('border', '1px solid #CCCCCC');
     }
-    if(isNaN(buildingDefaultBedCount) || buildingDefaultBedCount == '') {
+    if(buildingDefaultBedCount == '') {
         $('#building-default-bed-count').css('border', '1px solid red');
         formErrors = true;
     } else {
@@ -35,7 +35,7 @@ function addBuilding(page) {
     }
     
     
-    if(formErrors != true) {
+    if(formErrors == false) {
         $.ajax({
                 type: "POST",
                 url: '../../index.php/tenement/add_building',
@@ -499,7 +499,7 @@ function addNewsFeedEntry() {
         
         $.ajax({
             type: "POST",
-            url: 'add_newsfeed_item',
+            url: 'community_feed/add_newsfeed_item',
             data: {entryDate: entryDate, sTimeSelected: stimeSelected, eTimeSelected: etimeSelected, eTime: etime, sTime: stime, entryTitle: entryTitle, entryDescription: entryDescription},
             success: function(data) {
                 if(data == 1) {
@@ -576,7 +576,7 @@ function updateNewsFeedEntry(tmtnews_id) {
         
         $.ajax({
             type: "POST",
-            url: '../update_newsfeed_item',
+            url: 'community_feed/update_newsfeed_item',
             data: {tmtnewsid: tmtnews_id, entryDate: entryDate, sTimeSelected: stimeSelected, eTimeSelected: etimeSelected, eTime: etime, sTime: stime, entryTitle: entryTitle, entryDescription: entryDescription},
             success: function(data) {
                 if(data == 1) {

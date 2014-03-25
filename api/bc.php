@@ -35,4 +35,22 @@ class bc {
 }
 
 
+
+    // create curl resource
+    $ch = curl_init();
+
+
+    $api_url = 'http://162.243.56.184/api/index.php/user/dashboard/{id}';
+    $ch = curl_init(); curl_setopt( $ch, CURLOPT_URL, $api_url ); 
+    curl_setopt( $ch, CURLOPT_HTTPHEADER, array ('Accept: application/json', 'Content-Length: 0') );                                   
+    curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'GET'); 
+    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );   
+    $response = curl_exec( $ch );   
+    $result = json_decode($response); 
+    print_r($result);
+
+    // close curl resource to free up system resources
+    curl_close($ch);
+
 ?>
+
